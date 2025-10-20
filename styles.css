@@ -1,0 +1,237 @@
+/* =========================================================
+   styles.css（全修正版）
+   修复内容：
+   1. 维持SVG动感玻璃质感但无闪烁
+   2. 统一使用苹方/微软雅黑，文字颜色加深，阅读性提高
+   3. 上传图片后图片不会被玻璃层遮住
+   4. 移除了图片预览区的灰色背景
+   ========================================================= */
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px}
+body{
+  margin:0;
+  /* 1. 优先使用苹方和微软雅黑, 移除Inter */
+  font-family:"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
+  /* 2. 设置更深的基础字体颜色 */
+  color:#333;
+  background:
+    radial-gradient(1200px 800px at 15% 10%, rgba(158,203,255,.45) 0%, transparent 60%),
+    radial-gradient(1200px 800px at 85% 20%, rgba(255,209,232,.40) 0%, transparent 65%),
+    linear-gradient(120deg,#EAF7FF 0%,#F7F1FF 50%,#FFF2F6 100%);
+  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+  min-height:100vh; padding:20px;
+}
+a{color:inherit;text-decoration:none}
+h1,h2,h3,h4{line-height:1.2;margin-bottom:1rem}
+h1{
+  /* 移除像素字体和颜色, 使用body默认字体 */
+  font-size:2.2rem; /* 适当调大 */
+  font-weight:700; /* 加粗 */
+  letter-spacing:1px; /* 调整字距 */
+  line-height:1.2;
+  margin-bottom:1rem;
+  color: #222; /* 标题使用更深的颜色 */
+}
+h2{
+  /* 移除像素字体和颜色 */
+  font-size:1.5rem;
+  font-weight:700;
+  line-height:1.2;
+  margin-bottom:1rem;
+  color: #222;
+}
+p{margin-bottom:1.2rem; line-height:1.7; font-size:1.15rem}
+
+/* ===================== 玻璃结构 ===================== */
+.glass-component{position:relative;border-radius:24px;overflow:hidden;box-shadow:0 6px 15px rgba(0,0,0,.08);transition:transform .35s cubic-bezier(.175,.885,.32,1.275), box-shadow .35s; margin-bottom:2rem}
+.glass-component:hover:not(.no-hover){box-shadow:0 15px 35px rgba(0,0,0,.12); transform:translateY(-3px)}
+.glass-effect{position:absolute; inset:0; z-index:0; backdrop-filter:blur(10px) saturate(1.05); -webkit-backdrop-filter:blur(10px) saturate(1.05)}
+.glass-tint{position:absolute; inset:0; z-index:1; background:rgba(255,255,255,.22)}
+.glass-shine{position:absolute; inset:0; z-index:2; border:1px solid rgba(255,255,255,.4); box-shadow:inset 1px 1px 1px rgba(255,255,255,.6), inset -1px -1px 1px rgba(255,255,255,.3); pointer-events:none}
+.glass-content{position:relative; z-index:3; padding:2rem; color:inherit}
+
+/* ✅ 保留动感SVG玻璃层，但仅作用在.tint上（防闪烁） */
+.glass-tint--distorted{
+  filter:url(#glass-distortion);
+  will-change:filter;
+  backface-visibility:hidden;
+  transform:translateZ(0);
+  contain:paint;
+}
+
+/* ===================== 页面结构 ===================== */
+.container.glass-component{max-width:750px;margin:2rem auto;padding:0}
+.container>.glass-content{padding:30px 40px}
+header{text-align:center;margin-bottom:30px}
+.subtitle{color:#555;font-size:1.15rem;font-weight:500;margin-top:-8px; line-height:1.7;}
+
+/* ===================== 设置区 ===================== */
+.settings-container .glass-content{padding:1.5rem}
+.setting-item{margin-bottom:1rem}
+.setting-item label{display:block;margin-bottom:.5rem;font-weight:700;font-size:1.05rem;color: #333;}
+.setting-item input[type="password"], .setting-item select{
+  width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(0,0,0,.12); background:rgba(255,255,255,.4); color:inherit;
+  /* 移除 VT323 字体, 使用默认 */
+  font-size:1rem;
+}
+.setting-item input:focus,.setting-item select:focus{outline:none;border-color:rgba(0,0,0,.35);box-shadow:0 0 0 3px rgba(0,0,0,.06)}
+
+/* ===================== AI 模式选择 ===================== */
+.ai-type-selector .glass-content{padding:1.5rem}
+.ai-type-selector p{margin-bottom:14px;font-size:1.1rem;font-weight:600;color: #444;}
+.ai-type-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+.ai-type-option{padding:14px;border:2px solid rgba(0,0,0,.12);border-radius:12px;cursor:pointer;transition:all .2s;background:rgba(255,255,255,.18);text-align:center}
+.ai-type-option:hover{border-color:#007bff;background-color:rgba(0,123,255,.08);transform:translateY(-2px)}
+.ai-type-option input{display:none}
+.ai-type-option input:checked + .ai-type-name{color:#007bff;font-weight:800}
+.ai-type-option input:checked + .ai-type-name::before{content:">> "; color:#007bff}
+.ai-type-option input:checked ~ .ai-type-desc{opacity:1}
+.ai-type-name{font-size:1.05rem;font-weight:700;margin-bottom:4px}
+.ai-type-desc{font-size:.98rem;color: #555;opacity:.95}
+
+/* ===================== 上传区 ===================== */
+.upload-area{cursor:pointer;text-align:center;border:2px dashed rgba(0,0,0,.35);transition:all .3s}
+.upload-area .glass-content{padding:2.6rem 1rem}
+.upload-area:hover,.upload-area.drag-over{border-color:#007bff;background-color:rgba(0,123,255,.05)}
+.upload-inner{display:flex;flex-direction:column;align-items:center;gap:14px}
+.upload-icon{color:rgba(0,0,0,.7);width:48px;height:48px;transition:all .3s}
+.upload-area:hover .upload-icon{color:#007bff;transform:scale(1.06)}
+.upload-btn{color:#007bff;font-weight:700;text-decoration:underline;cursor:pointer;border-bottom:none}
+#file-input{display:none!important}
+
+/* ===================== 预览与结果 ===================== */
+.preview-container,.result-container{margin-top:28px;width:100%}
+
+/* ✅ 修复：上传后图片被玻璃层蒙在上面的问题 */
+.image-preview-container,
+.image-preview-container-result {
+  position: relative;
+}
+
+.image-preview-container .glass-effect,
+.image-preview-container .glass-tint,
+.image-preview-container-result .glass-effect,
+.image-preview-container-result .glass-tint {
+  z-index: 1;
+}
+.image-preview-container .glass-shine,
+.image-preview-container-result .glass-shine {
+  z-index: 2;
+}
+.image-preview-container .glass-content,
+.image-preview-container-result .glass-content {
+  z-index: 3;
+}
+.image-preview-container img,
+.image-preview-container-result img {
+  position: relative;
+  z-index: 4; /* ✅ 图片浮在滤镜上方 */
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(0,0,0,.08);
+  pointer-events: none; /* 保留拖拽 */
+}
+
+/* ✅ 修复：移除了灰色背景、padding 和 max-height */
+.image-preview-container,.image-preview-container-result{
+  /* max-height:350px; */ /* <-- REMOVED */
+  overflow:hidden; margin-bottom:22px;
+  display:flex; justify-content:center; align-items:center;
+  /* background:rgba(0,0,0,.62); */ /* <-- REMOVED */
+  /* padding:10px; */ /* <-- REMOVED */
+  border-radius:12px;
+}
+/* ✅ 修复：将 max-height 应用于图片本身 */
+#preview-image,#image-preview{max-width:100%;max-height:350px;object-fit:contain}
+
+.preview-actions,.result-actions{display:flex;justify-content:center;gap:14px;margin-top:22px;flex-wrap:wrap}
+
+/* 加载与结果 */
+.loading{display:flex;flex-direction:column;align-items:center;gap:14px;margin:34px 0;font-size:1.2rem;font-weight:600;color:inherit}
+.loading p::after{content:'_';animation:blink 1s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+
+.result{border:2px solid transparent;text-align:center}
+.result .glass-content{padding:1.4rem}
+.verdict-container{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px}
+#verdict{font-size:1.5rem;font-weight:700;letter-spacing:1px}
+#verdict-icon{font-size:1.4rem;line-height:1}
+#explanation{font-size:1.15rem;line-height:1.65;margin-bottom:26px;white-space:pre-wrap;color: #333;}
+.result.smash{border-color:#28a745;box-shadow:0 0 10px #28a745}
+.result.smash #verdict,.result.smash #verdict-icon{color:#28a745;text-shadow:0 0 5px #28a745}
+.result.pass{border-color:#dc3545;box-shadow:0 0 10px #dc3545}
+.result.pass #verdict,.result.pass #verdict-icon{color:#dc3545;text-shadow:0 0 5px #dc3545}
+
+/* ===================== 按钮 ===================== */
+.btn.glass-button{
+  /* 移除 VT323 字体 */
+  font-weight: 600; /* 加粗按钮文字 */
+  background:rgba(255,255,255,.18); color:inherit;
+  border:1px solid rgba(0,0,0,.22); padding:12px 22px; border-radius:12px;
+  font-size:1.05rem; /* 调整大小 */
+  cursor:pointer; transition:all .2s; text-transform:uppercase;
+  box-shadow:0 2px 5px rgba(0,0,0,.1)
+}
+.btn.glass-button:hover{background:rgba(255,255,255,.32);border-color:rgba(0,0,0,.35);box-shadow:0 4px 10px rgba(0,0,0,.15);transform:translateY(-2px)}
+.btn.glass-button:active{transform:translateY(0);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.btn.glass-button.btn-secondary{background:rgba(0,0,0,.06);border-color:rgba(0,0,0,.12);color:rgba(0,0,0,.85)}
+.btn.glass-button.btn-secondary:hover{background:rgba(0,0,0,.1);color:rgba(0,0,0,.95)}
+#save-settings{margin-top:1rem}
+.view-saved-btn{
+  /* 移除像素字体和黄颜色, 变为普通按钮 */
+  font-size:1.05rem;letter-spacing:1px;
+  font-weight: 600;
+  /* 应用普通按钮样式 */
+  border-color:rgba(0,0,0,.22);
+  background:rgba(255,255,255,.18);
+  color:inherit;
+  display:block;margin:30px auto 0
+}
+.view-saved-btn:hover{background:rgba(255,255,255,.32);border-color:rgba(0,0,0,.35);}
+
+/* ===================== 保存结果弹窗 ===================== */
+.saved-results .glass-content{padding:1.5rem}
+.saved-results h2{text-align:center;margin-bottom:18px}
+.saved-results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-top:18px;max-height:400px;overflow:auto;padding-right:8px}
+.saved-result-card{background:rgba(255,255,255,.16);border-radius:12px;overflow:hidden;transition:transform .2s, box-shadow .2s;border:1px solid rgba(0,0,0,.12);cursor:pointer}
+.saved-result-card:hover{transform:translateY(-4px);box-shadow:0 6px 15px rgba(0,0,0,.1)}
+.saved-result-card img{width:100%;height:120px;object-fit:cover;display:block}
+.saved-result-info{padding:10px}
+.saved-result-info .verdict{font-weight:800;margin-bottom:5px;font-size:1rem}
+.saved-result-info .explanation{max-height:60px;overflow:hidden;margin:5px 0;line-height:1.4;font-size:1rem;color: #333;}
+.saved-result-info .date{font-size:.95rem;color: #555;margin:5px 0}
+.saved-result-info .ai-type{font-size:.95rem;color:#007bff;margin-bottom:6px}
+.delete-btn{padding:8px 10px;border-radius:8px;font-size:1rem;width:100%;border:1px solid rgba(231,76,60,.5);color:#e74c3c;background:rgba(231,76,6D,.1);cursor:pointer;transition:all .2s;font-weight: 600;}
+.delete-btn:hover{background:rgba(231,76,60,.2);border-color:#e74c3c;transform:scale(1.03)}
+
+#popup-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:10000;padding:1rem;opacity:0;visibility:hidden;transition:opacity .3s, visibility 0s .3s}
+#popup-overlay.visible{opacity:1;visibility:visible;transition:opacity .3s}
+.popup-card{max-width:550px;width:100%;transform:scale(.96);opacity:0;transition:transform .28s .08s,opacity .28s .08s}
+#popup-overlay.visible .popup-card{transform:scale(1);opacity:1}
+.popup-card .glass-content{text-align:center;padding:24px 30px}
+.popup-card img{width:100%;max-height:45vh;object-fit:contain;border-radius:12px;margin-bottom:18px;background:rgba(0,0,0,.72);border:1px solid rgba(255,255,255,.2)}
+.popup-card h3{font-size:1.5rem;font-weight:700;margin-bottom:12px;color:inherit;}
+.popup-card p{margin:8px 0;font-size:1.1rem;line-height:1.6;color: #333;}
+.popup-card .date,.popup-card .ai-type{font-size:.95rem;opacity:.8;margin-top:12px}
+.popup-card .close-popup{position:absolute;top:15px;right:15px;font-size:24px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:transparent;border-radius:50%;border:1px solid rgba(0,0,0,.35);color:inherit;opacity:.7;cursor:pointer;transition:all .2s}
+.popup-card .close-popup:hover{opacity:1;background:rgba(0,0,0,.1);border-color:rgba(0,0,0,.5);transform:rotate(90deg)}
+
+.hidden{display:none!important}
+
+/* ===================== 响应式 ===================== */
+@media (max-width:600px){
+  body{padding:10px}
+  .container>.glass-content{padding:20px 15px}
+  h1{font-size:1.5rem}
+  .subtitle{font-size:1.1rem}
+  p{font-size:1.05rem}
+  .upload-area .glass-content{padding:28px 18px}
+  .btn.glass-button{font-size:1.05rem;padding:10px 18px}
+  #explanation{font-size:1.05rem}
+  .saved-results-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  .popup-card .glass-content{padding:20px}
+  .popup-card img{max-height:30vh}
+  .popup-card h3{font-size:1.2rem}
+  .popup-card p{font-size:1rem}
+  /* 移除了强制覆盖字体的 !important 行 */
+}

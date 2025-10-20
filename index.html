@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>上不上AI评分系统</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+    <svg style="position:absolute; width:0; height:0; overflow:hidden">
+      <filter id="glass-distortion" x="-50%" y="-50%" width="200%" height="200%" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+        <feTurbulence type="fractalNoise" baseFrequency="0.001 0.004" numOctaves="1" seed="17" result="turbulence"/>
+        <feGaussianBlur in="turbulence" stdDeviation="2" result="softMap"/>
+        <feDisplacementMap in="SourceGraphic" in2="softMap" scale="60" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+    </svg>
+
+    <div class="container glass-component">
+        <div class="glass-effect"></div>
+        <div class="glass-tint glass-tint--distorted"></div>
+        <div class="glass-content">
+            <header>
+                <h1>上不上AI评分系统</h1>
+                <p class="subtitle">上传图片，让AI来评判它的可操性</p>
+            </header>
+
+            <div class="settings-container glass-component nested-glass">
+                <div class="glass-effect"></div>
+                <div class="glass-tint glass-tint--distorted"></div>
+                <div class="glass-content">
+                    <div class="setting-item">
+                        <label for="google-api-key">Google API Key:</label>
+                        <input type="password" id="google-api-key" placeholder="在此输入您的API密钥">
+                    </div>
+                    <div class="setting-item">
+                        <label for="model-selector">选择AI模型:</label>
+                        <select id="model-selector">
+                            <option value="gemini-2.5-flash">Gemini 2.5 Flash (推荐)</option>
+                            <option value="gemini-2.5-pro">Gemini 2.5 Pro (最强)</option>
+                            <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash lite (最快)</option>
+                        </select>
+                    </div>
+                    <button id="save-settings" class="btn glass-button">💾 保存设置</button>
+                </div>
+                <div class="glass-shine"></div>
+            </div>
+
+            <div class="ai-type-selector glass-component nested-glass">
+                <div class="glass-effect"></div>
+                <div class="glass-tint glass-tint--distorted"></div>
+                <div class="glass-content">
+                    <p>选择AI分析模式：</p>
+                    <div class="ai-type-options">
+                        <label class="ai-type-option">
+                            <input type="radio" name="ai-type" value="brief" checked>
+                            <span class="ai-type-name">简短模式</span>
+                            <span class="ai-type-desc">短平快，1-2句，够味</span>
+                        </label>
+                        <label class="ai-type-option">
+                            <input type="radio" name="ai-type" value="descriptive">
+                            <span class="ai-type-name">详细模式</span>
+                            <span class="ai-type-desc">细嗦3+句，够劲</span>
+                        </label>
+                        <label class="ai-type-option">
+                            <input type="radio" name="ai-type" value="novel">
+                            <span class="ai-type-name">小说模式</span>
+                            <span class="ai-type-desc">400字以上，纯硬核</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="glass-shine"></div>
+            </div>
+
+            <div class="upload-area glass-component nested-glass" id="upload-area">
+                <div class="glass-effect"></div>
+                <div class="glass-tint glass-tint--distorted"></div>
+                <div class="glass-content upload-inner">
+                    <svg class="upload-icon" xmlns="http://www.w.w3.org/2000/svg" viewBox="0 0 24 24" width="64" height="64">
+                        <path d="M11 14.9861C11 15.5384 11.4477 15.9861 12 15.9861C12.5523 15.9861 13 15.5384 13 14.9861V7.82831L16.2428 11.0711L17.657 9.65685L12.0001 4L6.34326 9.65685L7.75748 11.0711L11 7.82854V14.9861Z" fill="currentColor"/>
+                        <path d="M4 14H6V18H18V14H20V18C20 19.1046 19.1046 20 18 20H6C4.89543 20 4 19.1046 4 18V14Z" fill="currentColor"/>
+                    </svg>
+                    <p>拖拽图片到这里或<span class="upload-btn">点击上传</span></p>
+                    <input type="file" id="file-input" accept="image/*" style="display:none">
+                </div>
+                <div class="glass-shine"></div>
+            </div>
+
+            <div class="preview-container hidden" id="preview-container">
+                <div class="image-preview-container glass-component nested-glass">
+                    <div class="glass-effect"></div>
+                    <div class="glass-tint glass-tint--distorted"></div>
+                    <img id="preview-image" src="" alt="待分析的图片">
+                    <div class="glass-shine"></div>
+                </div>
+                <div class="preview-actions">
+                    <button id="start-analysis-btn" class="btn glass-button">🚀 获取AI评分</button>
+                    <button id="change-image-btn" class="btn glass-button btn-secondary">🔁 换张图</button>
+                </div>
+            </div>
+
+            <div class="result-container hidden" id="result-container">
+                <div class="image-preview-container-result glass-component nested-glass" id="image-preview-container-result">
+                    <div class="glass-effect"></div>
+                    <div class="glass-tint glass-tint--distorted"></div>
+                    <img id="image-preview" src="" alt="上传的图片">
+                    <div class="glass-shine"></div>
+                </div>
+                <div id="loading" class="loading hidden">
+                    <div class="spinner"></div>
+                    <p>AI正在分析中...</p>
+                </div>
+                <div id="result" class="result glass-component nested-glass hidden">
+                    <div class="glass-effect"></div>
+                    <div class="glass-tint glass-tint--distorted"></div>
+                    <div class="glass-content">
+                        <div class="verdict-container">
+                            <h2 id="verdict">评分：</h2>
+                            <div id="verdict-icon"></div>
+                        </div>
+                        <p id="explanation"></p>
+                        <div class="result-actions">
+                            <button id="try-again" class="btn glass-button">🔁 再试一次</button>
+                        </div>
+                    </div>
+                    <div class="glass-shine"></div>
+                </div>
+            </div>
+
+            <button class="btn glass-button view-saved-btn" id="view-saved">📁 查看保存的结果</button>
+        </div>
+        <div class="glass-shine"></div>
+    </div>
+
+    <div id="popup-overlay">
+        <div class="popup-card glass-component">
+            <div class="glass-effect"></div>
+            <div class="glass-tint glass-tint--distorted"></div>
+            <div class="glass-content">
+                <button class="close-popup" onclick="closePopup()">×</button>
+                <img id="popup-image" src="" alt="保存结果的图片">
+                <h3 id="popup-verdict"></h3>
+                <p id="popup-explanation"></p>
+                <p id="popup-date" class="date"></p>
+                <p id="popup-ai-type" class="ai-type"></p>
+            </div>
+            <div class="glass-shine"></div>
+        </div>
+    </div>
+
+    <script type="module" src="main.js"></script>
+    <script>
+      function closePopup(){ document.getElementById('popup-overlay').classList.remove('visible') }
+      document.getElementById('popup-overlay').addEventListener('click', function(e){ if(e.target===this) closePopup() })
+    </script>
+</body>
+</html>
