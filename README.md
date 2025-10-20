@@ -7,8 +7,13 @@
 
 ---
 
+## 👉**项目作者[𝕏@Yamada_Ryoooo](https://x.com/Yamada_Ryoooo)**
+
+
+---
+
 ## 🌐 在线演示
-> [作者服务器链接](https://cbc.yamadaryo.me/)
+> [在线演示链接](https://cbc.yamadaryo.me/)
 > 
 > 本地演示也完全支持，只需打开 `index.html`
 
