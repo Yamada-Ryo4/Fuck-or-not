@@ -130,4 +130,4 @@ python3 -m http.server 8080
 
 ## 🪪 许可证
 
-MIT License © 2025 [Your Name]
+MIT License © 2025 Yamada-Ryo4
