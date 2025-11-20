@@ -23,7 +23,7 @@ export async function analyzeImage(imageDataUrl, aiType, modelName) {
         throw new Error("请在设置中输入您的Google API Key。");
     }
 
-    const GOOGLE_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+    const GOOGLE_API_URL = `https://gemini.yamadaryo.me/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
     const requestBody = {
         contents: [
