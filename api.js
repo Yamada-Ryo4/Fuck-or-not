@@ -23,6 +23,7 @@ export async function analyzeImage(imageDataUrl, aiType, modelName) {
         throw new Error("请在设置中输入您的Google API Key。");
     }
 
+    // 注意：这里使用了你的自定义反代地址
     const GOOGLE_API_URL = `https://gemini.yamadaryo.me/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
     const requestBody = {
@@ -35,8 +36,34 @@ export async function analyzeImage(imageDataUrl, aiType, modelName) {
                 ]
             }
         ],
+        // --- 新增：安全设置 (全部设为不拦截) ---
+        safetySettings: [
+            {
+                "category": "HARM_CATEGORY_HARASSMENT",
+                "threshold": "BLOCK_NONE"
+            },
+            {
+                "category": "HARM_CATEGORY_HATE_SPEECH",
+                "threshold": "BLOCK_NONE"
+            },
+            {
+                "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                "threshold": "BLOCK_NONE"
+            },
+            {
+                "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                "threshold": "BLOCK_NONE"
+            },
+            {
+                "category": "HARM_CATEGORY_CIVIC_INTEGRITY",
+                "threshold": "BLOCK_NONE"
+            }
+        ],
+        // -------------------------------------
         generationConfig: {
             responseMimeType: "application/json",
+            // 稍微提高温度，增加一点创造性（可选）
+            temperature: 0.9 
         }
     };
 
@@ -60,7 +87,8 @@ export async function analyzeImage(imageDataUrl, aiType, modelName) {
              console.error('从API返回的响应格式无效:', responseData);
              // 检查是否有安全提示
              if (responseData.promptFeedback && responseData.promptFeedback.blockReason) {
-                 throw new Error(`请求被安全策略阻止: ${responseData.promptFeedback.blockReason}`);
+                 // 即使设置了 BLOCK_NONE，极端内容仍可能被 Google 强制阻断，这里保留报错提示以便排查
+                 throw new Error(`请求被安全策略阻止 (BlockReason: ${responseData.promptFeedback.blockReason})。尽管已设置为不拦截，但内容可能触犯了Google的核心底线。`);
              }
              throw new Error('从API返回的响应格式无效或内容为空。');
         }
@@ -73,4 +101,3 @@ export async function analyzeImage(imageDataUrl, aiType, modelName) {
         throw error;
     }
 }
-
