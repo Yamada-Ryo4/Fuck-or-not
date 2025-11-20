@@ -143,4 +143,3 @@
 MIT License © 2025 Yamada-Ryo4
 
 ```
-```
