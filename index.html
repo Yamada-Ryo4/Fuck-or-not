@@ -1,14 +1,30 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#e8e9ff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-icon" href="favicon.ico">
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>上不上AI评分系统</title>
     <link rel="preconnect" href="https://fonts.googleapis.com"/>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
     <link rel="stylesheet" href="styles.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
 </head>
 <body>
+    <svg style="position:absolute; width:0; height:0; overflow:hidden">
+      <filter id="glass-distortion" x="-50%" y="-50%" width="200%" height="200%" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+        <feTurbulence type="fractalNoise" baseFrequency="0.001 0.004" numOctaves="1" seed="17" result="turbulence"/>
+        <feGaussianBlur in="turbulence" stdDeviation="2" result="softMap"/>
+        <feDisplacementMap in="SourceGraphic" in2="softMap" scale="60" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+    </svg>
+
     <div class="container glass-component">
         <div class="glass-effect"></div>
         <div class="glass-tint glass-tint--distorted"></div>
@@ -18,39 +34,66 @@
                 <p class="subtitle">上传图片，让AI来评判它的可操性</p>
             </header>
 
-            <div class="settings-container glass-component nested-glass">
+            <!-- 仪表盘面板 -->
+            <div class="dashboard-panel glass-component nested-glass">
                 <div class="glass-effect"></div>
                 <div class="glass-tint glass-tint--distorted"></div>
                 <div class="glass-content">
-                    <div class="setting-item">
-                        <label for="google-api-key">Google API Key:</label>
-                        <input type="password" id="google-api-key" placeholder="在此输入您的API密钥">
-                        <small style="margin-top: 5px; display: block; font-size: 0.9rem;">
-                            <a href="https://aistudio.google.com/app/api-keys" target="_blank" style="text-decoration: underline;">点此获取Google API Key</a>
-                        </small>
-                    </div>
                     
-                    <div class="api-hint" style="font-size: 0.85rem; opacity: 0.8; margin-top: 10px; margin-bottom: 15px; line-height: 1.5; padding: 10px; background: rgba(0,0,0,0.03); border-radius: 8px;">
+                    <!-- 状态显示条 -->
+                    <div id="status-bar" class="status-bar loading">
+                        <div class="status-dot"></div>
+                        <div class="status-message" id="status-text">正在连接检测...</div>
+                        <div class="status-ping" id="status-ping">--ms</div>
+                    </div>
+
+                    <!-- 模型选择器 -->
+                    <div class="model-selector-group">
+                        <label for="model-selector">选择AI模型:</label>
+                        <div class="custom-select-wrapper">
+                            <select id="model-selector">
+                                <option value="gemini-2.5-flash">Gemini 2.5 Flash (推荐)</option>
+                                <option value="gemini-2.5-pro">Gemini 2.5 Pro (最强)</option>
+                                <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash lite (最快)</option>
+                            </select>
+                            <svg class="select-arrow" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z" fill="currentColor"/></svg>
+                        </div>
+                    </div>
+
+                    <!-- 重要提示 -->
+                    <div class="api-hint" style="font-size: 0.85rem; opacity: 0.85; margin-top: 18px; line-height: 1.6; padding: 12px; background: rgba(0,0,0,0.03); border-radius: 8px; color: #444; border: 1px solid rgba(0,0,0,0.05);">
                         <strong>重要提示：</strong>当出现“分析失败: 从API返回的响应格式无效或内容为空”或“分析失败: 请求被安全策略阻止”时，为触发了Google官方的安全策略警告，此为 Google API 自身的内容限制，并非程序Bug。如果重新生成几次还是一样，请更换图片或模型后重试。
                     </div>
-                    <div class="setting-item">
-                        <label for="model-selector">选择AI模型:</label>
-                        <select id="model-selector">
-                            <option value="gemini-2.5-flash">Gemini 2.5 Flash (推荐)</option>
-                            <option value="gemini-2.5-pro">Gemini 2.5 Pro (最强)</option>
-                            <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash lite (最快)</option>
-                        </select>
+
+                    <!-- 高级设置区域 -->
+                    <div class="advanced-settings-wrapper">
+                        <button id="advanced-toggle" class="advanced-toggle-btn">
+                            <span>⚙️ 高级设置</span>
+                            <svg class="toggle-arrow" viewBox="0 0 24 24" width="16" height="16"><path d="M7 10l5 5 5-5z" fill="currentColor"/></svg>
+                        </button>
+                        
+                        <div id="advanced-content" class="advanced-content hidden">
+                            <div class="setting-item">
+                                <label for="custom-api-key" style="font-size: 0.9rem; font-weight: 700; color: #444; margin-bottom: 5px; display: block;">自定义 Google API Key (可选)</label>
+                                <input type="password" id="custom-api-key" placeholder="留空则使用内置共享额度">
+                                <small style="margin-top: 6px; display: block; font-size: 0.85rem; color: #666;">
+                                    <a href="https://aistudio.google.com/app/api-keys" target="_blank" style="text-decoration: underline; color: #555;">点此获取Google API Key</a>
+                                    <span style="opacity: 0.8">（如果是中国用户请使用VPN）</span>
+                                </small>
+                            </div>
+                        </div>
                     </div>
-                    <button id="save-settings" class="btn glass-button">💾 保存设置</button>
+
                 </div>
                 <div class="glass-shine"></div>
             </div>
 
+            <!-- 模式选择 -->
             <div class="ai-type-selector glass-component nested-glass">
                 <div class="glass-effect"></div>
                 <div class="glass-tint glass-tint--distorted"></div>
                 <div class="glass-content">
-                    <p>选择AI分析模式：</p>
+                    <p class="section-title">选择AI分析模式：</p>
                     <div class="ai-type-options">
                         <label class="ai-type-option">
                             <input type="radio" name="ai-type" value="brief" checked>

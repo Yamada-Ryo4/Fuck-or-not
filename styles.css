@@ -1,6 +1,5 @@
 /* =========================================================
-   styles.css（深度性能优化版）
-   保持了 100% 的原始外观，但去除了导致卡顿的实时SVG滤镜计算
+   styles.css - 完整版 (含高级设置样式)
    ========================================================= */
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -18,161 +17,190 @@ body{
 }
 a{color:inherit;text-decoration:none}
 h1,h2,h3,h4{line-height:1.2;margin-bottom:1rem}
-h1{font-size:2.2rem;font-weight:700;letter-spacing:1px;line-height:1.2;margin-bottom:1rem;color: #222;}
-h2{font-size:1.5rem;font-weight:700;line-height:1.2;margin-bottom:1rem;color: #222;}
-p{margin-bottom:1.2rem; line-height:1.7; font-size:1.15rem}
+h1{
+  font-size:2.2rem;font-weight:700;letter-spacing:1px;
+  margin-bottom:1rem;color: #222;
+  text-shadow: 0 2px 10px rgba(255,255,255,0.5);
+}
+h2{font-size:1.5rem;font-weight:700;margin-bottom:1rem;color: #222;}
+p{margin-bottom:1.2rem; line-height:1.7; font-size:1.1rem}
 
-/* ===================== 玻璃结构 (核心优化区) ===================== */
+/* ===================== 核心玻璃拟态 ===================== */
 .glass-component{
-    position:relative;
-    border-radius:24px;
-    overflow:hidden;
-    box-shadow:0 6px 15px rgba(0,0,0,.08);
-    transition:transform .35s cubic-bezier(.175,.885,.32,1.275), box-shadow .35s; 
-    margin-bottom:2rem;
-    /* 🚀 性能优化：开启硬件加速，防止重绘卡顿 */
-    transform: translateZ(0);
-    will-change: transform, box-shadow;
+  position:relative;border-radius:24px;overflow:hidden;
+  box-shadow:0 6px 15px rgba(0,0,0,.08);
+  transition:transform .35s cubic-bezier(.175,.885,.32,1.275), box-shadow .35s; 
+  margin-bottom:2rem
 }
-
 .glass-component:hover:not(.no-hover){box-shadow:0 15px 35px rgba(0,0,0,.12); transform:translateY(-3px)}
-
-/* 模糊层保持不变 */
 .glass-effect{position:absolute; inset:0; z-index:0; backdrop-filter:blur(10px) saturate(1.05); -webkit-backdrop-filter:blur(10px) saturate(1.05)}
-
-/* 基础着色层 */
-.glass-tint{position:absolute; inset:0; z-index:1; background:rgba(255,255,255,.22)}
-
-/* 光泽层 */
-.glass-shine{position:absolute; inset:0; z-index:2; border:1px solid rgba(255,255,255,.4); box-shadow:inset 1px 1px 1px rgba(255,255,255,.6), inset -1px -1px 1px rgba(255,255,255,.3); pointer-events:none}
-
+.glass-tint{position:absolute; inset:0; z-index:1; background:rgba(255,255,255,.25)}
+.glass-shine{position:absolute; inset:0; z-index:2; border:1px solid rgba(255,255,255,.5); box-shadow:inset 1px 1px 1px rgba(255,255,255,.6), inset -1px -1px 1px rgba(255,255,255,.3); pointer-events:none}
 .glass-content{position:relative; z-index:3; padding:2rem; color:inherit}
+.glass-tint--distorted{filter:url(#glass-distortion);will-change:filter;backface-visibility:hidden;transform:translateZ(0);contain:paint;}
 
-/* 🚀 核心修改：用静态SVG纹理代替实时滤镜 
-   视觉效果：依然是那种“磨砂噪点”质感，完全一样
-   性能提升：100倍，不再占用 GPU 计算
-*/
-.glass-tint--distorted {
-  opacity: 0.4; /* 调整透明度以匹配原效果 */
-  mix-blend-mode: overlay; /* 混合模式增强质感 */
-  /* 这是一个静态的噪点 SVG，浏览器渲染它零压力 */
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.5'/%3E%3C/svg%3E");
-  background-repeat: repeat;
-}
-
-/* ===================== 页面结构 ===================== */
 .container.glass-component{max-width:750px;margin:2rem auto;padding:0}
 .container>.glass-content{padding:30px 40px}
 header{text-align:center;margin-bottom:30px}
 .subtitle{color:#555;font-size:1.15rem;font-weight:500;margin-top:-8px; line-height:1.7;}
 
-/* ===================== 设置区 ===================== */
-.settings-container .glass-content{padding:1.5rem}
-.setting-item{margin-bottom:1rem}
-.setting-item label{display:block;margin-bottom:.5rem;font-weight:700;font-size:1.05rem;color: #333;}
-.setting-item input[type="password"], .setting-item select{width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(0,0,0,.12); background:rgba(255,255,255,.4); color:inherit; font-size:1rem;}
-.setting-item input:focus,.setting-item select:focus{outline:none;border-color:rgba(0,0,0,.35);box-shadow:0 0 0 3px rgba(0,0,0,.06)}
+/* ===================== 仪表盘 & 状态栏 ===================== */
+.dashboard-panel .glass-content { padding: 1.5rem; }
+.status-bar {
+    display: flex; align-items: center;
+    background: rgba(255,255,255,0.4);
+    border: 1px solid rgba(255,255,255,0.6);
+    border-radius: 12px; padding: 12px 16px;
+    margin-bottom: 1.2rem; transition: all 0.3s ease;
+}
+.status-dot {
+    width: 10px; height: 10px; border-radius: 50%; margin-right: 12px;
+    background: #ccc; transition: all 0.3s ease;
+}
+.status-message { flex-grow: 1; font-size: 0.95rem; font-weight: 600; color: #555; }
+.status-ping { font-size: 0.85rem; color: #888; font-family: monospace; }
 
-/* ===================== AI 模式选择 ===================== */
+/* 状态动画 */
+.status-bar.loading .status-dot { background: #f1c40f; animation: pulse-yellow 2s infinite; }
+.status-bar.success { background: rgba(46, 204, 113, 0.15); border-color: rgba(46, 204, 113, 0.3); }
+.status-bar.success .status-dot { background: #2ecc71; box-shadow: 0 0 6px #2ecc71; }
+.status-bar.success .status-message { color: #27ae60; }
+.status-bar.error { background: rgba(231, 76, 60, 0.1); border-color: rgba(231, 76, 60, 0.3); }
+.status-bar.error .status-dot { background: #e74c3c; }
+.status-bar.error .status-message { color: #c0392b; }
+@keyframes pulse-yellow {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(241, 196, 15, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(241, 196, 15, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(241, 196, 15, 0); }
+}
+
+/* 模型选择器 */
+.model-selector-group label { display: block; font-size: 0.95rem; font-weight: 700; color: #444; margin-bottom: 8px; margin-left: 4px; }
+.custom-select-wrapper { position: relative; }
+.custom-select-wrapper select {
+    width: 100%; appearance: none; -webkit-appearance: none;
+    background: rgba(255,255,255,0.5); border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 12px; padding: 12px 40px 12px 16px;
+    font-size: 1rem; color: #333; cursor: pointer; transition: all 0.2s;
+}
+.custom-select-wrapper select:hover { background: rgba(255,255,255,0.7); }
+.custom-select-wrapper select:focus { outline: none; background: rgba(255,255,255,0.9); border-color: #007bff; }
+.select-arrow { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; pointer-events: none; color: #666; }
+
+/* ★★★ 高级设置区域样式 ★★★ */
+.advanced-settings-wrapper {
+    margin-top: 15px;
+    border-top: 1px solid rgba(0,0,0,0.06);
+    padding-top: 10px;
+}
+.advanced-toggle-btn {
+    background: none; border: none; color: #777;
+    font-size: 0.9rem; font-weight: 600; cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 0; transition: color 0.2s;
+}
+.advanced-toggle-btn:hover { color: #333; }
+.toggle-arrow { transition: transform 0.3s ease; }
+.advanced-toggle-btn.active .toggle-arrow { transform: rotate(180deg); }
+.advanced-content { margin-top: 10px; padding-left: 4px; overflow: hidden; transition: all 0.3s ease; }
+.advanced-content.hidden { display: none; }
+#custom-api-key {
+    width: 100%; padding: 10px 12px; border-radius: 10px;
+    border: 1px solid rgba(0,0,0,0.1); background: rgba(255,255,255,0.5);
+    font-family: monospace; font-size: 0.95rem; color: #333;
+    margin-top: 5px; transition: all 0.2s;
+}
+#custom-api-key:focus { outline: none; background: rgba(255,255,255,0.9); border-color: #007bff; box-shadow: 0 0 0 3px rgba(0,123,255,0.1); }
+
+/* ===================== 其他通用样式 ===================== */
+.section-title { font-size: 1.05rem; font-weight: 700; color: #444; margin-bottom: 12px; }
 .ai-type-selector .glass-content{padding:1.5rem}
-.ai-type-selector p{margin-bottom:14px;font-size:1.1rem;font-weight:600;color: #444;}
-.ai-type-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
-.ai-type-option{padding:14px;border:2px solid rgba(0,0,0,.12);border-radius:12px;cursor:pointer;transition:all .2s;background:rgba(255,255,255,.18);text-align:center}
-.ai-type-option:hover{border-color:#007bff;background-color:rgba(0,123,255,.08);transform:translateY(-2px)}
+.ai-type-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px}
+.ai-type-option{
+    padding:12px; border:2px solid rgba(0,0,0,.08); border-radius:12px;
+    cursor:pointer; transition:all .2s; background:rgba(255,255,255,.2); text-align:center
+}
+.ai-type-option:hover{ border-color:#007bff; background-color:rgba(255,255,255,.5); transform:translateY(-2px) }
 .ai-type-option input{display:none}
 .ai-type-option input:checked + .ai-type-name{color:#007bff;font-weight:800}
 .ai-type-option input:checked + .ai-type-name::before{content:">> "; color:#007bff}
-.ai-type-option input:checked ~ .ai-type-desc{opacity:1}
-.ai-type-name{font-size:1.05rem;font-weight:700;margin-bottom:4px}
-.ai-type-desc{font-size:.98rem;color: #555;opacity:.95}
+.ai-type-option input:checked ~ .ai-type-desc{opacity:1; color:#007bff}
+.ai-type-name{display:block; font-size:1rem;font-weight:700;margin-bottom:4px}
+.ai-type-desc{display:block; font-size:.85rem;color: #666;opacity:.8; transition: color .2s}
 
-/* ===================== 上传区 ===================== */
-.upload-area{cursor:pointer;text-align:center;border:2px dashed rgba(0,0,0,.35);transition:all .3s}
+.upload-area{cursor:pointer;text-align:center;border:2px dashed rgba(0,0,0,.25);transition:all .3s;background: transparent;}
 .upload-area .glass-content{padding:2.6rem 1rem}
 .upload-area:hover,.upload-area.drag-over{border-color:#007bff;background-color:rgba(0,123,255,.05)}
 .upload-inner{display:flex;flex-direction:column;align-items:center;gap:14px}
-.upload-icon{color:rgba(0,0,0,.7);width:48px;height:48px;transition:all .3s}
-.upload-area:hover .upload-icon{color:#007bff;transform:scale(1.06)}
-.upload-btn{color:#007bff;font-weight:700;text-decoration:underline;cursor:pointer;border-bottom:none}
+.upload-icon{color:rgba(0,0,0,.6);width:48px;height:48px;transition:all .3s}
+.upload-area:hover .upload-icon{color:#007bff;transform:scale(1.1)}
+.upload-btn{color:#007bff;font-weight:700;text-decoration:underline;cursor:pointer}
 #file-input{display:none!important}
 
-/* ===================== 预览与结果 ===================== */
 .preview-container,.result-container{margin-top:28px;width:100%}
-.image-preview-container, .image-preview-container-result { position: relative; overflow:hidden; margin-bottom:22px; display:flex; justify-content:center; align-items:center; border-radius:12px; }
-.image-preview-container .glass-effect, .image-preview-container .glass-tint, .image-preview-container-result .glass-effect, .image-preview-container-result .glass-tint { z-index: 1; }
-.image-preview-container .glass-shine, .image-preview-container-result .glass-shine { z-index: 2; }
-.image-preview-container .glass-content, .image-preview-container-result .glass-content { z-index: 3; }
-.image-preview-container img, .image-preview-container-result img { position: relative; z-index: 4; border-radius: 12px; box-shadow: 0 0 10px rgba(0,0,0,.08); pointer-events: none; }
-#preview-image,#image-preview{max-width:100%;max-height:350px;object-fit:contain}
+.image-preview-container, .image-preview-container-result {
+  position: relative; overflow:hidden; margin-bottom:22px;
+  display:flex; justify-content:center; align-items:center; border-radius:12px;
+}
+.image-preview-container img, .image-preview-container-result img {
+  position: relative; z-index: 4; border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,.1); max-width:100%; max-height:400px; object-fit:contain;
+}
 .preview-actions,.result-actions{display:flex;justify-content:center;gap:14px;margin-top:22px;flex-wrap:wrap}
 
-/* 加载与结果 */
-.loading{display:flex;flex-direction:column;align-items:center;gap:14px;margin:34px 0;font-size:1.2rem;font-weight:600;color:inherit}
-.loading p::after{content:'_';animation:blink 1s step-end infinite}
-@keyframes blink{50%{opacity:0}}
+.loading{display:flex;flex-direction:column;align-items:center;gap:14px;margin:34px 0;font-size:1.2rem;font-weight:600;color:#444}
+.spinner { width: 40px; height: 40px; border: 4px solid rgba(0, 123, 255, 0.1); border-left-color: #007bff; border-radius: 50%; animation: spin 1s linear infinite; }
+@keyframes spin { 100% { transform: rotate(360deg); } }
 
-.result{border:2px solid transparent;text-align:center}
 .result .glass-content{padding:1.4rem}
 .verdict-container{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px}
-#verdict{font-size:1.5rem;font-weight:700;letter-spacing:1px}
+#verdict{font-size:1.6rem;font-weight:800;letter-spacing:1px; margin-bottom: 0;}
 #verdict-icon{font-size:1.4rem;line-height:1}
-#explanation{font-size:1.15rem;line-height:1.65;margin-bottom:26px;white-space:pre-wrap;color: #333;}
-.result.smash{border-color:#28a745;box-shadow:0 0 10px #28a745}
-.result.smash #verdict,.result.smash #verdict-icon{color:#28a745;text-shadow:0 0 5px #28a745}
-.result.pass{border-color:#dc3545;box-shadow:0 0 10px #dc3545}
-.result.pass #verdict,.result.pass #verdict-icon{color:#dc3545;text-shadow:0 0 5px #dc3545}
+#explanation{font-size:1.1rem;line-height:1.6;margin-bottom:26px;white-space:pre-wrap;color: #333;}
+.result.smash{border: 2px solid rgba(40, 167, 69, 0.3); box-shadow:0 0 15px rgba(40, 167, 69, 0.2)}
+.result.smash #verdict, .result.smash #verdict-icon {color:#28a745; text-shadow:0 0 5px rgba(40,167,69,0.3)}
+.result.pass{border: 2px solid rgba(220, 53, 69, 0.3); box-shadow:0 0 15px rgba(220, 53, 69, 0.2)}
+.result.pass #verdict, .result.pass #verdict-icon {color:#dc3545; text-shadow:0 0 5px rgba(220,53,69,0.3)}
 
-/* ===================== 按钮 ===================== */
-.btn.glass-button{font-weight: 600; background:rgba(255,255,255,.18); color:inherit; border:1px solid rgba(0,0,0,.22); padding:12px 22px; border-radius:12px; font-size:1.05rem; cursor:pointer; transition:all .2s; text-transform:uppercase; box-shadow:0 2px 5px rgba(0,0,0,.1)}
-.btn.glass-button:hover{background:rgba(255,255,255,.32);border-color:rgba(0,0,0,.35);box-shadow:0 4px 10px rgba(0,0,0,.15);transform:translateY(-2px)}
-.btn.glass-button:active{transform:translateY(0);box-shadow:0 1px 3px rgba(0,0,0,.1)}
-.btn.glass-button.btn-secondary{background:rgba(0,0,0,.06);border-color:rgba(0,0,0,.12);color:rgba(0,0,0,.85)}
-.btn.glass-button.btn-secondary:hover{background:rgba(0,0,0,.1);color:rgba(0,0,0,.95)}
-#save-settings{margin-top:1rem}
-.view-saved-btn{font-size:1.05rem;letter-spacing:1px; font-weight: 600; border-color:rgba(0,0,0,.22); background:rgba(255,255,255,.18); color:inherit; display:block;margin:30px auto 0}
-.view-saved-btn:hover{background:rgba(255,255,255,.32);border-color:rgba(0,0,0,.35);}
+.btn.glass-button{
+  font-weight: 600; background:linear-gradient(135deg, rgba(255,255,255,0.6), rgba(255,255,255,0.2)); 
+  color:#333; border:1px solid rgba(255,255,255,0.6); padding:12px 24px; border-radius:12px;
+  font-size:1rem; cursor:pointer; transition:all .2s; text-transform:uppercase;
+  box-shadow:0 4px 6px rgba(0,0,0,.05)
+}
+.btn.glass-button:hover{background:rgba(255,255,255,0.8); transform:translateY(-2px); box-shadow:0 6px 12px rgba(0,0,0,.1)}
+.btn.glass-button:active{transform:translateY(0)}
+.btn.glass-button.btn-secondary{background:transparent; border-color:rgba(0,0,0,0.2); opacity: 0.85; color: #444;}
+.btn.glass-button.btn-secondary:hover{opacity: 1; background:rgba(0,0,0,0.05); color: #222;}
 
-/* ===================== 保存结果弹窗 ===================== */
+.view-saved-btn{display:block;margin:30px auto 0; width: 100%; max-width: 300px;}
+
 .saved-results .glass-content{padding:1.5rem}
 .saved-results h2{text-align:center;margin-bottom:18px}
-.saved-results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-top:18px;max-height:400px;overflow:auto;padding-right:8px}
-.saved-result-card{background:rgba(255,255,255,.16);border-radius:12px;overflow:hidden;transition:transform .2s, box-shadow .2s;border:1px solid rgba(0,0,0,.12);cursor:pointer}
+.saved-results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-top:18px;max-height:400px;overflow:auto;padding-right:8px}
+.saved-result-card{background:rgba(255,255,255,.3);border-radius:12px;overflow:hidden;transition:transform .2s, box-shadow .2s;border:1px solid rgba(0,0,0,.1);cursor:pointer}
 .saved-result-card:hover{transform:translateY(-4px);box-shadow:0 6px 15px rgba(0,0,0,.1)}
 .saved-result-card img{width:100%;height:120px;object-fit:cover;display:block}
 .saved-result-info{padding:10px}
-.saved-result-info .verdict{font-weight:800;margin-bottom:5px;font-size:1rem}
-.saved-result-info .explanation{max-height:60px;overflow:hidden;margin:5px 0;line-height:1.4;font-size:1rem;color: #333;}
-.saved-result-info .date{font-size:.95rem;color: #555;margin:5px 0}
-.saved-result-info .ai-type{font-size:.95rem;color:#007bff;margin-bottom:6px}
-.delete-btn{padding:8px 10px;border-radius:8px;font-size:1rem;width:100%;border:1px solid rgba(231,76,60,.5);color:#e74c3c;background:rgba(231,76,6D,.1);cursor:pointer;transition:all .2s;font-weight: 600;}
-.delete-btn:hover{background:rgba(231,76,60,.2);border-color:#e74c3c;transform:scale(1.03)}
+.saved-result-info .date{font-size:.85rem;color: #666}
+.delete-btn{margin-top: 5px; padding:6px 10px;border-radius:6px;font-size:.9rem;width:100%;border:1px solid rgba(231,76,60,.5);color:#e74c3c;background:rgba(231,76,60,.1);cursor:pointer;font-weight: 600;}
 
-#popup-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:10000;padding:1rem;opacity:0;visibility:hidden;transition:opacity .3s, visibility 0s .3s}
-#popup-overlay.visible{opacity:1;visibility:visible;transition:opacity .3s}
-.popup-card{max-width:550px;width:100%;transform:scale(.96);opacity:0;transition:transform .28s .08s,opacity .28s .08s}
-#popup-overlay.visible .popup-card{transform:scale(1);opacity:1}
-.popup-card .glass-content{text-align:center;padding:24px 30px}
-.popup-card img{width:100%;max-height:45vh;object-fit:contain;border-radius:12px;margin-bottom:18px;background:rgba(0,0,0,.72);border:1px solid rgba(255,255,255,.2)}
-.popup-card h3{font-size:1.5rem;font-weight:700;margin-bottom:12px;color:inherit;}
-.popup-card p{margin:8px 0;font-size:1.1rem;line-height:1.6;color: #333;}
-.popup-card .date,.popup-card .ai-type{font-size:.95rem;opacity:.8;margin-top:12px}
-.popup-card .close-popup{position:absolute;top:15px;right:15px;font-size:24px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:transparent;border-radius:50%;border:1px solid rgba(0,0,0,.35);color:inherit;opacity:.7;cursor:pointer;transition:all .2s}
-.popup-card .close-popup:hover{opacity:1;background:rgba(0,0,0,.1);border-color:rgba(0,0,0,.5);transform:rotate(90deg)}
-
+#popup-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;z-index:9999;opacity:0;visibility:hidden;transition:all .3s}
+#popup-overlay.visible{opacity:1;visibility:visible}
+.popup-card{max-width:550px;width:90%;transform:scale(.95);transition:all .3s;max-height: 90vh; overflow-y: auto;}
+#popup-overlay.visible .popup-card{transform:scale(1)}
+.popup-card .glass-content{padding:24px; text-align: center;}
+.popup-card img{width:100%;border-radius:8px;margin-bottom:15px; max-height: 50vh; object-fit: contain; background: rgba(0,0,0,0.05);}
+.popup-card .close-popup{position:absolute;top:15px;right:15px;background:rgba(0,0,0,0.1);border-radius:50%;width:30px; height:30px; border:none;font-size:20px;cursor:pointer;color:#555;display: flex; align-items: center; justify-content: center;transition: all 0.2s;}
+.popup-card .close-popup:hover{background:rgba(0,0,0,0.2); color:#000;}
 .hidden{display:none!important}
 
 @media (max-width:600px){
   body{padding:10px}
   .container>.glass-content{padding:20px 15px}
-  h1{font-size:1.5rem}
-  .subtitle{font-size:1.1rem}
-  p{font-size:1.05rem}
-  .upload-area .glass-content{padding:28px 18px}
-  .btn.glass-button{font-size:1.05rem;padding:10px 18px}
-  #explanation{font-size:1.05rem}
-  .saved-results-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
-  .popup-card .glass-content{padding:20px}
-  .popup-card img{max-height:30vh}
-  .popup-card h3{font-size:1.2rem}
-  .popup-card p{font-size:1rem}
+  h1{font-size:1.8rem}
+  .status-bar { padding: 10px; }
+  .status-message { font-size: 0.85rem; }
+  .ai-type-options { grid-template-columns: 1fr; }
+  .popup-card img{max-height:40vh}
 }
