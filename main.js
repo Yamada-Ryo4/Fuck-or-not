@@ -23,7 +23,6 @@ document.addEventListener('DOMContentLoaded', () => {
     statusText: document.getElementById('status-text'),
     statusPing: document.getElementById('status-ping'),
     
-    // 高级设置元素
     advancedToggle: document.getElementById('advanced-toggle'),
     advancedContent: document.getElementById('advanced-content'),
     customApiKeyInput: document.getElementById('custom-api-key'),
@@ -41,20 +40,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function loadSettings(){
     const s = getSettings();
-    el.modelSelector.value = s.selectedModel || 'gemini-2.5-flash';
-    el.customApiKeyInput.value = s.customApiKey || ''; // 回填 Key
+    // 兼容性检查：如果保存的模型不在新列表里，默认回到 2.5-flash
+    const savedModel = s.selectedModel;
+    const modelExists = Array.from(el.modelSelector.options).some(opt => opt.value === savedModel);
+    el.modelSelector.value = modelExists ? savedModel : 'gemini-2.5-flash';
+    
+    el.customApiKeyInput.value = s.customApiKey || '';
   }
 
   function handleModelChange() {
     updateSettings({ selectedModel: el.modelSelector.value });
+    // 切换模型后，自动重新检测连通性
+    el.statusBar.className = 'status-bar loading';
+    el.statusText.textContent = `正在检测 ${el.modelSelector.options[el.modelSelector.selectedIndex].text}...`;
+    runAutoConnectivityTest();
   }
 
-  // 处理 Key 变更：保存并重新测试
   function handleApiKeyChange() {
     const key = el.customApiKeyInput.value.trim();
     updateSettings({ customApiKey: key });
     
-    // 重置状态为 Loading 并重新测试
     el.statusBar.className = 'status-bar loading';
     el.statusText.textContent = '配置更新，正在重新检测...';
     el.statusPing.textContent = '--ms';
@@ -72,15 +77,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (result.success) {
         el.statusBar.classList.add('success');
         el.statusBar.classList.remove('error');
-        el.statusText.textContent = '云端服务正常 (Ready)';
+        el.statusText.textContent = '服务正常 (Ready)';
         el.statusPing.textContent = `${pingTime}ms`;
     } else {
         el.statusBar.classList.add('error');
         el.statusBar.classList.remove('success');
         el.statusPing.textContent = 'ERR';
         
-        if (result.message.includes('Quota') || result.message.includes('额度')) {
-             el.statusText.textContent = '额度耗尽 (Quota Exceeded)';
+        // 连通性测试失败的详细提示
+        if (result.message.includes('Quota') || result.message.includes('额度') || result.message.includes('429')) {
+             el.statusText.textContent = '❌ 当前模型额度已满，请切换模型';
         } else if (result.message.includes('未配置') && !el.customApiKeyInput.value) {
              el.statusText.textContent = '未配置 API Key';
         } else {
@@ -89,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // --- Upload & Analysis Logic ---
+  // --- Upload ---
   async function handleFileSelect(){
     if (!el.fileInput.files.length) return;
     const file = el.fileInput.files[0];
@@ -132,7 +138,12 @@ document.addEventListener('DOMContentLoaded', () => {
         ui.createShareButton(handleShareResult);
       }, 300);
     }catch(error){
-      ui.displayError(`分析失败: ${error.message}`);
+      // ★★★ 智能错误引导 ★★★
+      let errorMsg = error.message;
+      if (errorMsg.includes('Quota') || errorMsg.includes('额度') || errorMsg.includes('429')) {
+          errorMsg = `💔 当前模型 (${el.modelSelector.value}) 额度已耗尽！\n\n💡 解决方法：\n1. 请在上方【选择AI模型】中切换其他模型重试（推荐 Lite 或 Gemma 系列）\n2. 或在【高级设置】中填入自己的 API Key`;
+      }
+      ui.displayError(errorMsg);
     }
   }
 
@@ -178,7 +189,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     el.modelSelector.addEventListener('change', handleModelChange);
     
-    // 高级设置事件
     el.advancedToggle.addEventListener('click', () => {
         el.advancedContent.classList.toggle('hidden');
         el.advancedToggle.classList.toggle('active');

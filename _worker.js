@@ -1,3 +1,5 @@
+--- START OF FILE _worker.js ---
+
 const API_BASE_URL = 'https://gemini.yamadaryo.me';
 
 // 辅助函数：提取 Base64
@@ -29,7 +31,6 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    // 拦截 /submit 路径
     if (url.pathname === "/submit") {
         if (request.method !== "POST") {
             return new Response("Method Not Allowed. Use POST.", { status: 405 });
@@ -37,7 +38,6 @@ export default {
         return handleSubmit(request, env);
     }
 
-    // 其他请求走静态资源
     return env.ASSETS.fetch(request);
   }
 };
@@ -49,11 +49,9 @@ async function handleSubmit(request, env) {
 
         let apiKeys = [];
 
-        // ★★★ 逻辑核心：优先使用前端传来的自定义 Key ★★★
         if (customApiKey && customApiKey.trim().length > 0) {
             apiKeys = [customApiKey.trim()];
         } else {
-            // 如果没填自定义 Key，才去读环境变量池
             apiKeys = getAllApiKeys(env);
         }
         
@@ -65,11 +63,10 @@ async function handleSubmit(request, env) {
             });
         }
 
-        // --- Ping 测试逻辑 (零消耗) ---
+        // --- Ping 测试逻辑 ---
         if (isPing) {
             let lastError = null;
             for (const apiKey of apiKeys) {
-                // 使用 List Models 接口，只查元数据，不消耗生成额度
                 const checkUrl = `${API_BASE_URL}/v1beta/models?key=${apiKey}&pageSize=1`;
                 try {
                     const response = await fetch(checkUrl, {
@@ -113,9 +110,15 @@ async function handleSubmit(request, env) {
         });
 
         let modelName = model || 'gemini-2.5-flash';
+
+        // ★★★ 关键修改：针对 Gemma 模型禁用 JSON Mode ★★★
+        const isGemma = modelName.toLowerCase().includes('gemma');
+        
         const requestBody = {
             contents: contents,
-            generationConfig: { responseMimeType: "application/json" }
+            // 如果是 Gemma，不传 generationConfig 或传空对象
+            // 如果是 Gemini，强制要求 JSON
+            generationConfig: isGemma ? {} : { responseMimeType: "application/json" }
         };
 
         let lastError = null;
