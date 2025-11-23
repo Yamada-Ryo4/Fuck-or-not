@@ -55,6 +55,13 @@ async function handleSubmit(request, env) {
             apiKeys = getAllApiKeys(env);
         }
         
+		if (!customApiKey && apiKeys.length > 1) {
+            for (let i = apiKeys.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [apiKeys[i], apiKeys[j]] = [apiKeys[j], apiKeys[i]];
+            }
+        }
+		
         if (apiKeys.length === 0) {
             return new Response(JSON.stringify({ 
                 error: "服务器未配置共享 API Key，且未提供自定义 Key。" 
