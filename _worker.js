@@ -1,5 +1,3 @@
---- START OF FILE _worker.js ---
-
 const API_BASE_URL = 'https://gemini.yamadaryo.me';
 
 // 辅助函数：提取 Base64
@@ -166,4 +164,5 @@ async function handleSubmit(request, env) {
     } catch (err) {
         return new Response(JSON.stringify({ error: `Server Error: ${err.message}` }), { status: 500 });
     }
+
 }
