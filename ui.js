@@ -18,27 +18,42 @@ const elements = {
   imagePreviewContainerResult: document.getElementById('image-preview-container-result'),
 };
 
-let popupOverlay = null;
+// [FIX] 直接获取 HTML 中已经存在的 popup-overlay
+let popupOverlay = document.getElementById('popup-overlay');
 
-// --- Popup (kept) ---
-function createPopup(){
-  if (document.getElementById('popup-overlay')) return;
-  popupOverlay = document.createElement('div');
-  popupOverlay.id = 'popup-overlay';
-  popupOverlay.innerHTML = `
-    <div class="popup-card">
-      <button class="close-popup">×</button>
-      <img id="popup-img" src="" alt="预览图片">
-      <h3 id="popup-verdict"></h3>
-      <p id="popup-explanation"></p>
-    </div>
-  `;
-  popupOverlay.style.display = '';
-  document.body.appendChild(popupOverlay);
-  popupOverlay.addEventListener('click', e => { if (e.target === popupOverlay) hidePopup() });
-  popupOverlay.querySelector('.close-popup').addEventListener('click', hidePopup);
+// 初始化弹窗逻辑（如果 HTML 里没写，这里作为后备创建；如果写了，就绑定事件）
+function initPopup(){
+  if (!popupOverlay) {
+    // Fallback: 如果 HTML 里没有这个元素，我们才创建它
+    popupOverlay = document.createElement('div');
+    popupOverlay.id = 'popup-overlay';
+    popupOverlay.innerHTML = `
+      <div class="popup-card glass-component">
+        <button class="close-popup">×</button>
+        <img id="popup-image" src="" alt="预览图片">
+        <h3 id="popup-verdict"></h3>
+        <p id="popup-explanation"></p>
+        <p id="popup-date" class="date"></p>
+        <p id="popup-ai-type" class="ai-type"></p>
+      </div>
+    `;
+    document.body.appendChild(popupOverlay);
+  }
+  
+  // 绑定关闭事件 (兼容 HTML 中已有的 onclick)
+  // 如果是动态创建的或者是 HTML 中没绑定的，这里统一绑定一次
+  popupOverlay.addEventListener('click', e => { 
+    if (e.target === popupOverlay) hidePopup(); 
+  });
+  
+  const closeBtn = popupOverlay.querySelector('.close-popup');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', hidePopup);
+  }
 }
-createPopup();
+
+// 执行初始化
+initPopup();
 
 // --- UI State ---
 export function showPreview(imageDataUrl){
@@ -60,11 +75,6 @@ export function showLoading(imageDataUrl){
   btns.forEach(b => b.remove());
 }
 
-/**
- * ✅ [已修复]
- * 使用 classList.add/remove 来修改类，
- * 避免 elements.result.className 覆盖掉 'glass-component' 等基础类
- */
 export function displayResult({ rating, verdict: vText, explanation: exp }){
   elements.loading.classList.add('hidden');
   elements.result.classList.remove('hidden');
@@ -74,34 +84,21 @@ export function displayResult({ rating, verdict: vText, explanation: exp }){
   elements.verdictIcon.textContent = isSmash ? 'SMASH!!' : isPass ? 'PASS' : '...';
   elements.explanation.textContent = exp;
 
-  // --- 修复BUG ---
-  // 使用 classList.remove 和 classList.add 代替 className 覆盖
-  elements.result.classList.remove('smash', 'pass'); // 先移除旧的状态
+  elements.result.classList.remove('smash', 'pass');
   if (isSmash) {
     elements.result.classList.add('smash');
   } else if (isPass) {
     elements.result.classList.add('pass');
   }
-  // 这样 'result', 'glass-component', 'nested-glass' 类就会被保留
-  // --- 修复结束 ---
 }
 
-/**
- * ✅ [已修复]
- * 使用 classList.remove 来修改类，
- * 避免 elements.result.className 覆盖掉 'glass-component' 等基础类
- */
 export function displayError(msg){
   elements.loading.classList.add('hidden');
   elements.result.classList.remove('hidden');
   elements.verdict.textContent = '错误!';
   elements.verdictIcon.textContent = 'ERROR';
   elements.explanation.textContent = msg;
-  
-  // --- 修复BUG ---
-  // 确保 'smash' 或 'pass' 类被移除，但保留基础类
   elements.result.classList.remove('smash', 'pass');
-  // --- 修复结束 ---
 }
 
 export function resetToUpload(){
@@ -113,13 +110,9 @@ export function resetToUpload(){
   btns.forEach(b => b.remove());
 }
 
-/**
- * ✅ [已修复]
- * 添加了 'glass-button' 类，使其具有玻璃效果
- */
 export function createSaveButton(onClick){
   const btn = document.createElement('button');
-  btn.className = 'btn glass-button save-btn'; // <--- 已添加 'glass-button'
+  btn.className = 'btn glass-button save-btn';
   btn.textContent = '💾 保存结果';
   btn.addEventListener('click', () => {
     onClick(); btn.textContent = '✓ 已保存'; btn.disabled = true;
@@ -127,13 +120,9 @@ export function createSaveButton(onClick){
   elements.resultActions.appendChild(btn);
 }
 
-/**
- * ✅ [已修复]
- * 添加了 'glass-button' 类，使其具有玻璃效果
- */
 export function createShareButton(onClick){
   const btn = document.createElement('button');
-  btn.className = 'btn glass-button share-btn'; // <--- 已添加 'glass-button'
+  btn.className = 'btn glass-button share-btn';
   btn.textContent = '🔗 分享评分';
   btn.addEventListener('click', () => {
     onClick(); btn.textContent = '✓ 已复制!'; setTimeout(()=>{ btn.textContent='🔗 分享评分' }, 2000);
@@ -147,8 +136,9 @@ export function createSavedResultsContainer(results, handlers){
   if (results.length === 0){
     container.innerHTML = `<h2>保存的结果</h2><p style="text-align:center;opacity:.8">暂无保存的结果</p>`;
   }else{
+    // [FIX] 增加 style="cursor: pointer;" 让用户知道可以点击
     const grid = results.map((r,i)=>`
-      <div class="saved-result-card" data-index="${i}">
+      <div class="saved-result-card" data-index="${i}" style="cursor: pointer;">
         <img src="${r.image}" alt="Saved result ${i+1}">
         <div class="saved-result-info">
           <p class="date">${new Date(r.timestamp).toLocaleDateString()}</p>
@@ -160,37 +150,66 @@ export function createSavedResultsContainer(results, handlers){
       </div>
     `).join('');
     container.innerHTML = `<h2>保存的结果</h2><div class="saved-results-grid">${grid}</div>`;
+    
+    // 绑定删除事件
     container.querySelectorAll('.delete-btn').forEach(btn=>{
-      btn.addEventListener('click', e => { e.stopPropagation(); handlers.onDelete(parseInt(e.target.dataset.index)) });
+      btn.addEventListener('click', e => { 
+        e.stopPropagation(); 
+        handlers.onDelete(parseInt(e.target.dataset.index));
+      });
     });
+
+    // 绑定卡片点击事件 (打开弹窗)
     container.querySelectorAll('.saved-result-card').forEach(card=>{
-      card.addEventListener('click', e => { if(e.target.classList.contains('delete-btn')) return; handlers.onView(parseInt(card.dataset.index)) });
+      card.addEventListener('click', e => { 
+        // [FIX] 更安全的检查：如果点击的是删除按钮内部（例如图标），也不触发弹窗
+        if(e.target.closest('.delete-btn')) return; 
+        
+        handlers.onView(parseInt(card.dataset.index));
+      });
     });
   }
   return container;
 }
 
 export function showPopup(result){
-  if (!popupOverlay) return;
-  document.getElementById('popup-img').src = result.image;
-  document.getElementById('popup-verdict').textContent = `${getRatingLabel(result.rating)} (${result.rating}/10)`;
-  const p = document.getElementById('popup-explanation');
-  p.textContent = result.explanation; p.style.whiteSpace = 'pre-wrap';
+  // 现在 popupOverlay 一定有值了
+  if (!popupOverlay) return; 
+
+  // 填充数据 (注意 ID 要和 HTML 对应)
+  const imgEl = document.getElementById('popup-image') || document.getElementById('popup-img'); // 兼容
+  if(imgEl) imgEl.src = result.image;
+  
+  const verdictEl = document.getElementById('popup-verdict');
+  if(verdictEl) verdictEl.textContent = `${getRatingLabel(result.rating)} (${result.rating}/10)`;
+  
+  const explanationEl = document.getElementById('popup-explanation');
+  if(explanationEl) {
+    explanationEl.textContent = result.explanation; 
+    explanationEl.style.whiteSpace = 'pre-wrap';
+  }
+
+  const dateEl = document.getElementById('popup-date');
+  if(dateEl) dateEl.textContent = new Date(result.timestamp).toLocaleString();
+
+  const typeEl = document.getElementById('popup-ai-type');
+  if(typeEl) typeEl.textContent = '模式: ' + (result.aiType==='brief'?'简短':result.aiType==='descriptive'?'详细':'小说');
+
+  // 显示弹窗
   popupOverlay.classList.add('visible');
 }
-export function hidePopup(){ if (popupOverlay) popupOverlay.classList.remove('visible') }
 
-/* ===== 图片压缩：仅当 >10MB 时压到 10MB 内 ===== */
+export function hidePopup(){ 
+  if (popupOverlay) popupOverlay.classList.remove('visible');
+}
 
-/** 从 dataURL 得到字节大小 */
+/* ===== 图片压缩部分保持不变 ===== */
 function dataUrlSizeBytes(dataUrl){
   const base64 = dataUrl.split(',')[1] || '';
-  // 4/3 * n - padding
   const padding = (base64.endsWith('==') ? 2 : base64.endsWith('=') ? 1 : 0);
   return Math.floor(base64.length * 3 / 4) - padding;
 }
 
-/** 以给定质量导出 JPEG dataURL */
 function drawToJpegDataUrl(img, width, height, quality){
   const canvas = document.createElement('canvas');
   canvas.width = width; canvas.height = height;
@@ -199,12 +218,6 @@ function drawToJpegDataUrl(img, width, height, quality){
   return canvas.toDataURL('image/jpeg', quality);
 }
 
-/**
- * 保证图片 <= maxBytes（默认 10MB）。策略：
- * 1) 先按面积比例缩放（开平方）逼近大小目标；
- * 2) 若仍超标，逐步降低 JPEG 质量（0.9 -> 0.8 -> ... -> 0.5）；
- * 3) 若还超标，再次小幅缩放并尝试更低质量直到达标或质量到 0.4。
- */
 export async function ensureUnderMaxBytes(dataUrl, maxBytes = 10 * 1024 * 1024){
   if (dataUrlSizeBytes(dataUrl) <= maxBytes) return dataUrl;
 
@@ -212,21 +225,18 @@ export async function ensureUnderMaxBytes(dataUrl, maxBytes = 10 * 1024 * 1024){
   await new Promise((res, rej) => { img.onload=res; img.onerror=rej; img.src=dataUrl; });
 
   let w = img.width, h = img.height;
-  // 先按面积比缩放到大致目标
   const bytes = dataUrlSizeBytes(dataUrl);
   const ratio = Math.min(1, Math.sqrt(maxBytes / bytes));
   w = Math.max(1, Math.round(w * ratio));
   h = Math.max(1, Math.round(h * ratio));
   let out = drawToJpegDataUrl(img, w, h, 0.9);
 
-  // 质量阶梯
   const qualities = [0.9,0.85,0.8,0.75,0.7,0.65,0.6,0.55,0.5,0.45,0.4];
   let qIndex = 0;
   while (dataUrlSizeBytes(out) > maxBytes && qIndex < qualities.length){
     out = drawToJpegDataUrl(img, w, h, qualities[qIndex++]);
   }
 
-  // 如仍超标，再做一次微缩
   while (dataUrlSizeBytes(out) > maxBytes && (w > 512 || h > 512)){
     w = Math.round(w * 0.9); h = Math.round(h * 0.9);
     out = drawToJpegDataUrl(img, w, h, Math.max(0.4, qualities[Math.min(qIndex, qualities.length-1)]));
@@ -235,7 +245,6 @@ export async function ensureUnderMaxBytes(dataUrl, maxBytes = 10 * 1024 * 1024){
   return out;
 }
 
-/* 兼容旧接口：仅按边长限制（保留以防其他地方引用） */
 export function resizeImage(dataUrl, maxWidth=1024, maxHeight=1024){
   return new Promise((resolve, reject) => {
     const img = new Image();
