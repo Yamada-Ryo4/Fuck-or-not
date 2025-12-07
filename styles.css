@@ -204,3 +204,22 @@ header{text-align:center;margin-bottom:30px}
   .ai-type-options { grid-template-columns: 1fr; }
   .popup-card img{max-height:40vh}
 }
+/* =========================================
+   【修复】弹窗内容模糊问题
+   ========================================= */
+
+/* 专门针对弹窗内的玻璃层，强制移除扭曲滤镜 */
+.popup-card .glass-tint--distorted {
+    /* 核心代码：将滤镜设置为无，并提高优先级 */
+    filter: none !important;
+    
+    /* 可选：微调背景色，让它看起来更清晰通透，同时保留一点玻璃质感 */
+    background: rgba(255, 255, 255, 0.2) !important;
+    /* 确保混合模式正常 */
+    mix-blend-mode: normal !important;
+}
+
+/* 可选：稍微降低弹窗背景光效的透明度，让内容主体更突出 */
+.popup-card .glass-effect {
+    opacity: 0.4 !important;
+}
