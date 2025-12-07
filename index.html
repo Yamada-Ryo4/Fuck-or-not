@@ -34,32 +34,27 @@
                 <p class="subtitle">上传图片，让AI来评判它的可操性</p>
             </header>
 
-            <!-- 仪表盘面板 -->
             <div class="dashboard-panel glass-component nested-glass">
                 <div class="glass-effect"></div>
                 <div class="glass-tint glass-tint--distorted"></div>
                 <div class="glass-content">
                     
-                    <!-- 状态显示条 -->
                     <div id="status-bar" class="status-bar loading">
                         <div class="status-dot"></div>
                         <div class="status-message" id="status-text">正在连接检测...</div>
                         <div class="status-ping" id="status-ping">--ms</div>
                     </div>
 
-                    <!-- 模型选择器 (包含全量模型) -->
                     <div class="model-selector-group">
                         <label for="model-selector">选择AI模型:</label>
                         <div class="custom-select-wrapper">
                             <select id="model-selector">
-                                <!-- 热门推荐 -->
                                 <optgroup label="🔥 热门推荐">
                                     <option value="gemini-2.5-flash">Gemini 2.5 Flash (推荐)</option>
                                     <option value="gemini-2.5-pro">Gemini 2.5 Pro (最强)</option>
                                     <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite (最快)</option>
                                 </optgroup>
 
-                                <!-- Gemini 2.0 系列 -->
                                 <optgroup label="⚡ Gemini 2.0 系列">
                                     <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
                                     <option value="gemini-2.0-flash-lite-preview-02-05">Gemini 2.0 Flash Lite (Preview)</option>
@@ -67,20 +62,17 @@
                                     <option value="gemini-2.0-flash-lite-001">Gemini 2.0 Flash Lite (001)</option>
                                 </optgroup>
 
-                                <!-- 动态最新版 -->
                                 <optgroup label="旧版">
                                     <option value="gemini-flash-latest">Gemini Flash Latest</option>
                                     <option value="gemini-flash-lite-latest">Gemini Flash Lite Latest</option>
                                     <option value="gemini-pro-latest">Gemini Pro Latest</option>
                                 </optgroup>
 
-                                <!-- Gemma 开源系列 -->
                                 <optgroup label="💎 Gemma 系列">
                                     <option value="gemma-3-12b-it">Gemma 3 12B IT</option>
                                     <option value="gemma-3-27b-it">Gemma 3 27B IT</option>
                                 </optgroup>
 
-                                <!-- 预览/存档 -->
                                 <optgroup label="🧪 预览与存档">
                                     <option value="gemini-2.5-flash-preview-09-2025">Gemini 2.5 Flash Preview</option>
                                 </optgroup>
@@ -89,12 +81,10 @@
                         </div>
                     </div>
 
-                    <!-- 重要提示 -->
                     <div class="api-hint" style="font-size: 0.85rem; opacity: 0.85; margin-top: 18px; line-height: 1.6; padding: 12px; background: rgba(0,0,0,0.03); border-radius: 8px; color: #444; border: 1px solid rgba(0,0,0,0.05);">
                         <strong>重要提示：</strong>当出现“分析失败: 从API返回的响应格式无效或内容为空”或“分析失败: 请求被安全策略阻止”时，为触发了Google官方的安全策略警告，此为 Google API 自身的内容限制，并非程序Bug。如果重新生成几次还是一样，请更换图片或模型后重试。
                     </div>
 
-                    <!-- 高级设置区域 -->
                     <div class="advanced-settings-wrapper">
                         <button id="advanced-toggle" class="advanced-toggle-btn">
                             <span>⚙️ 高级设置</span>
@@ -117,7 +107,6 @@
                 <div class="glass-shine"></div>
             </div>
 
-            <!-- 模式选择 -->
             <div class="ai-type-selector glass-component nested-glass">
                 <div class="glass-effect"></div>
                 <div class="glass-tint glass-tint--distorted"></div>
@@ -207,8 +196,7 @@
     <div id="popup-overlay">
         <div class="popup-card glass-component">
             <div class="glass-effect"></div>
-            <div class="glass-tint glass-tint--distorted"></div>
-            <div class="glass-content">
+            <div class="glass-tint"></div> <div class="glass-content">
                 <button class="close-popup" onclick="closePopup()">×</button>
                 <img id="popup-image" src="" alt="保存结果的图片">
                 <h3 id="popup-verdict"></h3>
