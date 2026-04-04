@@ -111,7 +111,7 @@ async function handleSubmit(request, env) {
             model: modelName,
             messages: messages,
             temperature: 0.7,
-            max_tokens: 3072
+            max_tokens: 8192
         };
 
         let lastError = null;
