@@ -137,7 +137,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }, 300);
     }catch(error){
       let errorMsg = error.message;
-      if (errorMsg.includes('Quota') || errorMsg.includes('429')) {
+      const savedKey = getSettings().apiKey;
+      if ((errorMsg.includes('Unauthorized') || errorMsg.includes('401')) && savedKey) {
+          errorMsg = `💔 自定义 Key 已失效！\n\n请点击【⚙️ 高级设置】清空输入框，保存后重试。\n（系统将自动切换为服务器共享 Key）`;
+      } else if (errorMsg.includes('Quota') || errorMsg.includes('429')) {
           errorMsg = `💔 NVIDIA 额度已耗尽！\n\n💡 解决方法：\n1. 请在上方切换其他模型（如 Mistral 或 Gemma）\n2. 或在【高级设置】中填入自己的 NVIDIA API Key`;
       }
       ui.displayError(errorMsg);

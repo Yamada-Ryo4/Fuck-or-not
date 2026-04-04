@@ -1,4 +1,17 @@
 import { getRatingLabel } from './prompts.js';
+
+// 轻量 Markdown 渲染器（支持 **bold**、*italic*、---、换行段落）
+function renderMd(text) {
+  if (!text) return '';
+  return text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') // XSS 防护
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')                   // **粗体**
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')                               // *斜体*
+    .replace(/^---$/gm, '<hr>')                                         // --- 分割线
+    .replace(/\n{2,}/g, '</p><p>')                                      // 双换行 → 段落
+    .replace(/\n/g, '<br>')                                             // 单换行 → <br>
+    .replace(/^/, '<p>').replace(/$/, '</p>');                          // 包裹段落
+}
 import * as store from './store.js';
 
 // --- DOM Cache ---
@@ -82,7 +95,7 @@ export function displayResult({ rating, verdict: vText, explanation: exp }){
   const isPass  = vText === 'PASS';
   elements.verdict.textContent = `${getRatingLabel(rating)} (${rating}/10)`;
   elements.verdictIcon.textContent = isSmash ? 'SMASH!!' : isPass ? 'PASS' : '...';
-  elements.explanation.textContent = exp;
+  elements.explanation.innerHTML = renderMd(exp);
 
   elements.result.classList.remove('smash', 'pass');
   if (isSmash) {
