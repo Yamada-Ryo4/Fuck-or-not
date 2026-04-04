@@ -70,25 +70,23 @@ async function handleSubmit(request, env) {
             });
         }
 
-        // --- Ping 测试逻辑 (NVIDIA 版) ---
+        // --- Ping 测试逻辑 (使用 GET /models，零消耗 Token) ---
         if (isPing) {
-            let lastError = null;
             const keyToTest = apiKeys[0];
             try {
-                const response = await fetch(`${API_BASE_URL}/chat/completions`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${keyToTest}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        model: model || 'qwen/qwen3.5-397b-a17b',
-                        messages: [{ role: 'user', content: 'hi' }],
-                        max_tokens: 1
-                    })
+                const response = await fetch(`${API_BASE_URL}/models`, {
+                    method: 'GET',
+                    headers: { 'Authorization': `Bearer ${keyToTest}` }
                 });
-                const data = await response.json();
-                if (response.ok) {
-                    return new Response(JSON.stringify({ success: true, message: "Valid API_KEY" }), { headers: { 'Content-Type': 'application/json' } });
+                if (response.ok || response.status === 422) {
+                    // 200 = 正常; 422 = Key 有效但请求格式问题（不影响）
+                    return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } });
+                } else if (response.status === 429) {
+                    // 额度满了，但 Key 本身有效
+                    return new Response(JSON.stringify({ success: true, message: "配额接近上限" }), { headers: { 'Content-Type': 'application/json' } });
                 } else {
-                    return new Response(JSON.stringify({ error: data.error?.message || "Invalid Key" }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+                    const data = await response.json().catch(() => ({}));
+                    return new Response(JSON.stringify({ error: data.message || `Key 无效 (${response.status})` }), { status: 401, headers: { 'Content-Type': 'application/json' } });
                 }
             } catch (err) {
                 return new Response(JSON.stringify({ error: err.message }), { status: 503, headers: { 'Content-Type': 'application/json' } });
