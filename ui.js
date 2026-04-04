@@ -1,16 +1,14 @@
 import { getRatingLabel } from './prompts.js';
 
-// 轻量 Markdown 渲染器（支持 **bold**、*italic*、---、换行段落）
+// 轻量 Markdown 渲染器（支持多行 **bold**、*italic*、---、换行）
 function renderMd(text) {
   if (!text) return '';
   return text
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') // XSS 防护
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')                   // **粗体**
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')                               // *斜体*
-    .replace(/^---$/gm, '<hr>')                                         // --- 分割线
-    .replace(/\n{2,}/g, '</p><p>')                                      // 双换行 → 段落
-    .replace(/\n/g, '<br>')                                             // 单换行 → <br>
-    .replace(/^/, '<p>').replace(/$/, '</p>');                          // 包裹段落
+    .replace(/\*\*([\s\S]+?)\*\*/g, '<strong>$1</strong>')             // **粗体** (支持跨行)
+    .replace(/\*([\s\S]+?)\*/g, '<em>$1</em>')                         // *斜体*
+    .replace(/^---+$/gm, '<hr>')                                       // --- 分割线
+    .replace(/\n/g, '<br>');                                           // 所有换行全部转为 <br>
 }
 import * as store from './store.js';
 
