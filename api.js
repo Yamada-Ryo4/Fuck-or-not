@@ -13,27 +13,25 @@ export async function analyzeImage(imageDataUrl, aiType, modelName) {
                 systemPrompt: systemPrompts[aiType], 
                 model: modelName,
                 isPing: false,
-                customApiKey: settings.customApiKey
+                apiKey: settings.apiKey
             })
         });
 
         const responseData = await response.json();
         if (!response.ok) throw new Error(responseData.error || `请求失败: ${response.status}`);
         
+        // 兼容适配层格式 (已经在 _worker.js 中处理成为了 candidates 结构)
         if (!responseData.candidates || !responseData.candidates[0]?.content) {
-             if (responseData.promptFeedback?.blockReason) throw new Error(`安全拦截: ${responseData.promptFeedback.blockReason}`);
              throw new Error('API响应无效或内容为空。');
         }
 
         let content = responseData.candidates[0].content.parts[0].text;
         
-        // ★★★ 增强的 JSON 解析逻辑 (兼容 Gemma) ★★★
+        // JSON 解析逻辑
         try {
-            // 1. 尝试直接清理 Markdown
             const cleaned = content.replace(/```json/g, '').replace(/```/g, '').trim();
             return JSON.parse(cleaned);
         } catch (e1) {
-            // 2. 如果失败，尝试提取第一个 { 到最后一个 } 之间的内容
             try {
                 const jsonMatch = content.match(/\{[\s\S]*\}/);
                 if (jsonMatch) {
@@ -52,7 +50,7 @@ export async function analyzeImage(imageDataUrl, aiType, modelName) {
     }
 }
 
-export async function testServiceAvailability() {
+export async function testServiceAvailability(model) {
     const settings = getSettings(); 
     try {
         const response = await fetch('/submit', {
@@ -60,7 +58,8 @@ export async function testServiceAvailability() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
                 isPing: true,
-                customApiKey: settings.customApiKey
+                model: model || 'mistralai/ministral-14b-instruct-2512',
+                apiKey: settings.apiKey
             })
         });
 

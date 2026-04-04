@@ -1,8 +1,8 @@
-const SETTINGS_KEY = 'fon_google_settings';
+const SETTINGS_KEY = 'fon_nvidia_settings';
 
 const defaults = {
-    selectedModel: 'gemini-2.5-flash',
-    customApiKey: ''
+    selectedModel: 'qwen/qwen3.5-397b-a17b',
+    apiKey: ''
 };
 
 let settings = { ...defaults };
@@ -12,13 +12,19 @@ function loadFromLocalStorage() {
     if (stored) {
         try {
             const parsed = JSON.parse(stored);
-            // 合并逻辑，防止旧设置覆盖新字段
             settings = { ...defaults, ...parsed };
         } catch (e) {
             settings = { ...defaults };
         }
     } else {
-        settings = { ...defaults };
+        // 尝试从旧 key 迁移
+        const oldStored = localStorage.getItem('fon_google_settings');
+        if (oldStored) {
+            try {
+                const oldParsed = JSON.parse(oldStored);
+                settings.apiKey = oldParsed.customApiKey || '';
+            } catch (e) {}
+        }
     }
 }
 

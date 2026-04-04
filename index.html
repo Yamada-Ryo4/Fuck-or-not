@@ -47,41 +47,25 @@
                         <label for="model-selector">选择AI模型:</label>
                         <div class="custom-select-wrapper">
                             <select id="model-selector">
-                                <optgroup label="🔥 热门推荐">
-                                    <option value="gemini-2.5-flash">Gemini 2.5 Flash (推荐)</option>
-                                    <option value="gemini-2.5-pro">Gemini 2.5 Pro (最强)</option>
-                                    <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite (最快)</option>
+                                <optgroup label="🔥 顶级推荐">
+                                    <option value="mistralai/ministral-14b-instruct-2512">Ministral 14B ⚡ 最快最骚</option>
+                                    <option value="mistralai/mistral-medium-3-instruct">Mistral Medium 3 🔥 细节拿捏</option>
                                 </optgroup>
 
-                                <optgroup label="⚡ Gemini 2.0 系列">
-                                    <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
-                                    <option value="gemini-2.0-flash-lite-preview-02-05">Gemini 2.0 Flash Lite (Preview)</option>
-                                    <option value="gemini-2.0-flash-001">Gemini 2.0 Flash (001)</option>
-                                    <option value="gemini-2.0-flash-lite-001">Gemini 2.0 Flash Lite (001)</option>
+                                <optgroup label="💪 高质量备选">
+                                    <option value="qwen/qwen3.5-397b-a17b">Qwen 3.5 397B 🐢 强但超慢</option>
+                                    <option value="google/gemma-3-27b-it">Gemma 3 27B 🌶️ 偶尔放开</option>
                                 </optgroup>
 
-                                <optgroup label="旧版">
-                                    <option value="gemini-flash-latest">Gemini Flash Latest</option>
-                                    <option value="gemini-flash-lite-latest">Gemini Flash Lite Latest</option>
-                                    <option value="gemini-pro-latest">Gemini Pro Latest</option>
-                                </optgroup>
-
-                                <optgroup label="💎 Gemma 系列">
-                                    <option value="gemma-3-12b-it">Gemma 3 12B IT</option>
-                                    <option value="gemma-3-27b-it">Gemma 3 27B IT</option>
-                                </optgroup>
-
-                                <optgroup label="🧪 预览与存档">
-                                    <option value="gemini-2.5-flash-preview-09-2025">Gemini 2.5 Flash Preview</option>
+                                <optgroup label="🧪 实验性 / 不推荐">
+                                    <option value="google/gemma-4-31b-it">Gemma 4 31B ❌ 道德圣母</option>
                                 </optgroup>
                             </select>
                             <svg class="select-arrow" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z" fill="currentColor"/></svg>
                         </div>
                     </div>
 
-                    <div class="api-hint" style="font-size: 0.85rem; opacity: 0.85; margin-top: 18px; line-height: 1.6; padding: 12px; background: rgba(0,0,0,0.03); border-radius: 8px; color: #444; border: 1px solid rgba(0,0,0,0.05);">
-                        <strong>重要提示：</strong>当出现“分析失败: 从API返回的响应格式无效或内容为空”或“分析失败: 请求被安全策略阻止”时，为触发了Google官方的安全策略警告，此为 Google API 自身的内容限制，并非程序Bug。如果重新生成几次还是一样，请更换图片或模型后重试。
-                    </div>
+                        <strong>提示：</strong>Gemma 4 和 Dracarys 安全过滤严格，建议优先选 Ministral 14B 或 Mistral Medium 3 获得最佳体验。
 
                     <div class="advanced-settings-wrapper">
                         <button id="advanced-toggle" class="advanced-toggle-btn">
@@ -91,11 +75,10 @@
                         
                         <div id="advanced-content" class="advanced-content hidden">
                             <div class="setting-item">
-                                <label for="custom-api-key" style="font-size: 0.9rem; font-weight: 700; color: #444; margin-bottom: 5px; display: block;">自定义 Google API Key (可选)</label>
-                                <input type="password" id="custom-api-key" placeholder="留空则使用内置共享额度">
+                                <label for="custom-api-key" style="font-size: 0.9rem; font-weight: 700; color: #444; margin-bottom: 5px; display: block;">自定义 NVIDIA API_KEY (可选)</label>
+                                <input type="password" id="custom-api-key" placeholder="nvapi-...">
                                 <small style="margin-top: 6px; display: block; font-size: 0.85rem; color: #666;">
-                                    <a href="https://aistudio.google.com/app/api-keys" target="_blank" style="text-decoration: underline; color: #555;">点此获取Google API Key</a>
-                                    <span style="opacity: 0.8">（如果是中国用户请使用VPN）</span>
+                                    <a href="https://build.nvidia.com/explore/discover" target="_blank" style="text-decoration: underline; color: #555;">点此获取 NVIDIA API Key</a>
                                 </small>
                             </div>
                         </div>

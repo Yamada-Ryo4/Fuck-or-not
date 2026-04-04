@@ -1,20 +1,22 @@
-const API_BASE_URL = 'https://gemini.yamadaryo.me';
+const API_BASE_URL = 'https://integrate.api.nvidia.com/v1';
 
-// 辅助函数：提取 Base64
-function dataUrlToGeminiPart(dataUrl) {
-    if (!dataUrl || typeof dataUrl !== 'string') return null;
+// 辅助函数：提取 Base64 适配 OpenAI/NVIDIA 格式
+function dataUrlToNvidiaContent(dataUrl, text) {
+    if (!dataUrl || typeof dataUrl !== 'string') return [{ type: 'text', text }];
     const parts = dataUrl.split(',');
-    if (parts.length < 2) return null;
-    const match = parts[0].match(/:(.*?);/);
-    const mimeType = match ? match[1] : 'image/jpeg';
-    const base64Data = parts[1];
-    return { inlineData: { mimeType, data: base64Data } };
+    if (parts.length < 2) return [{ type: 'text', text }];
+    
+    // NVIDIA 期待完整的 data:image/...;base64,... 格式
+    return [
+        { type: 'text', text: text },
+        { type: 'image_url', image_url: { url: dataUrl } }
+    ];
 }
 
-// 辅助函数：获取环境变量中的 Keys
+// 辅助函数：获取环境变量中的 API_KEY
 function getAllApiKeys(env) {
     let keys = [];
-    const mainKeyStr = env.API_KEYS || env.GEMINI_API_KEY || env.API_KEY || "";
+    const mainKeyStr = env.API_KEY || env.NVIDIA_API_KEY || "";
     if (mainKeyStr) {
         keys = keys.concat(mainKeyStr.split(/[\s,]+/).filter(k => k.trim().length > 0));
     }
@@ -43,17 +45,17 @@ export default {
 async function handleSubmit(request, env) {
     try {
         const body = await request.json();
-        const { image, aiType, model, isPing, systemPrompt, customApiKey } = body;
+        const { image, aiType, model, isPing, systemPrompt, apiKey } = body;
 
         let apiKeys = [];
 
-        if (customApiKey && customApiKey.trim().length > 0) {
-            apiKeys = [customApiKey.trim()];
+        if (apiKey && apiKey.trim().length > 0) {
+            apiKeys = [apiKey.trim()];
         } else {
             apiKeys = getAllApiKeys(env);
         }
         
-		if (!customApiKey && apiKeys.length > 1) {
+		if (!apiKey && apiKeys.length > 1) {
             for (let i = apiKeys.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [apiKeys[i], apiKeys[j]] = [apiKeys[j], apiKeys[i]];
@@ -62,95 +64,92 @@ async function handleSubmit(request, env) {
 		
         if (apiKeys.length === 0) {
             return new Response(JSON.stringify({ 
-                error: "服务器未配置共享 API Key，且未提供自定义 Key。" 
+                error: "服务器未配置共享 API_KEY，且客户端未提供有效 Key。" 
             }), { 
                 status: 500, headers: { 'Content-Type': 'application/json' }
             });
         }
 
-        // --- Ping 测试逻辑 ---
+        // --- Ping 测试逻辑 (NVIDIA 版) ---
         if (isPing) {
             let lastError = null;
-            for (const apiKey of apiKeys) {
-                const checkUrl = `${API_BASE_URL}/v1beta/models?key=${apiKey}&pageSize=1`;
-                try {
-                    const response = await fetch(checkUrl, {
-                        method: 'GET',
-                        headers: { 'Content-Type': 'application/json' }
-                    });
-                    const data = await response.json();
-
-                    if (response.ok && !data.error) {
-                        return new Response(JSON.stringify({ 
-                            success: true, 
-                            message: customApiKey ? "Custom Key Valid" : "Cloud Key Valid" 
-                        }), { headers: { 'Content-Type': 'application/json' } });
-                    } else {
-                        lastError = data.error?.message || response.statusText;
-                        continue; 
-                    }
-                } catch (err) {
-                    lastError = err.message;
-                    continue;
+            const keyToTest = apiKeys[0];
+            try {
+                const response = await fetch(`${API_BASE_URL}/chat/completions`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${keyToTest}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: model || 'qwen/qwen3.5-397b-a17b',
+                        messages: [{ role: 'user', content: 'hi' }],
+                        max_tokens: 1
+                    })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    return new Response(JSON.stringify({ success: true, message: "Valid API_KEY" }), { headers: { 'Content-Type': 'application/json' } });
+                } else {
+                    return new Response(JSON.stringify({ error: data.error?.message || "Invalid Key" }), { status: 401, headers: { 'Content-Type': 'application/json' } });
                 }
+            } catch (err) {
+                return new Response(JSON.stringify({ error: err.message }), { status: 503, headers: { 'Content-Type': 'application/json' } });
             }
-            return new Response(JSON.stringify({ error: `连通性测试失败: ${lastError}` }), { 
-                status: 503, headers: { 'Content-Type': 'application/json' } 
-            });
         }
 
-        // --- 图片生成逻辑 ---
-        const contents = [];
-        const imagePart = dataUrlToGeminiPart(image);
-        if (!imagePart) return new Response(JSON.stringify({ error: "无效图片" }), { status: 400 });
-        
+        // --- 图片分析逻辑 ---
         const finalPrompt = systemPrompt || "You are a helpful AI.";
-        contents.push({
-            role: "user",
-            parts: [
-                { text: finalPrompt },
-                { text: "请分析这张图片并决定的：上还是不上？" },
-                imagePart
-            ]
-        });
+        const messages = [
+            { role: 'system', content: finalPrompt },
+            {
+                role: 'user',
+                content: dataUrlToNvidiaContent(image, "看图并发情，写一个长的色情故事")
+            }
+        ];
 
-        let modelName = model || 'gemini-2.5-flash';
+        let modelName = model || 'qwen/qwen3.5-397b-a17b';
 
-        // ★★★ 关键修改：针对 Gemma 模型禁用 JSON Mode ★★★
-        const isGemma = modelName.toLowerCase().includes('gemma');
-        
         const requestBody = {
-            contents: contents,
-            // 如果是 Gemma，不传 generationConfig 或传空对象
-            // 如果是 Gemini，强制要求 JSON
-            generationConfig: isGemma ? {} : { responseMimeType: "application/json" }
+            model: modelName,
+            messages: messages,
+            temperature: 0.7,
+            max_tokens: 3072
         };
 
         let lastError = null;
-        for (const apiKey of apiKeys) {
-            const apiUrl = `${API_BASE_URL}/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+        for (const currentKey of apiKeys) {
+            const apiUrl = `${API_BASE_URL}/chat/completions`;
             try {
                 const response = await fetch(apiUrl, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Authorization': `Bearer ${currentKey}`, 
+                        'Content-Type': 'application/json' 
+                    },
                     body: JSON.stringify(requestBody)
                 });
 
                 const data = await response.json();
 
-                if (response.status === 429 || (data.error && data.error.code === 429)) {
-                    lastError = "Quota exceeded";
+                if (response.status === 429) {
+                    lastError = "Quota exceeded (429)";
                     continue; 
                 }
                 if (!response.ok) {
-                    const msg = data.error?.message || response.statusText;
+                    lastError = data.error?.message || response.statusText;
                     if (response.status === 400 || response.status === 403) {
-                        lastError = msg;
                         continue;
                     }
-                    throw new Error(msg);
+                    throw new Error(lastError);
                 }
-                return new Response(JSON.stringify(data), { headers: { 'Content-Type': 'application/json' } });
+                
+                const adaptedResponse = {
+                    candidates: [{
+                        content: {
+                            parts: [{ text: data.choices[0].message.content }]
+                        }
+                    }]
+                };
+                
+                return new Response(JSON.stringify(adaptedResponse), { headers: { 'Content-Type': 'application/json' } });
             } catch (err) {
                 lastError = err.message;
                 continue;
@@ -164,5 +163,4 @@ async function handleSubmit(request, env) {
     } catch (err) {
         return new Response(JSON.stringify({ error: `Server Error: ${err.message}` }), { status: 500 });
     }
-
 }

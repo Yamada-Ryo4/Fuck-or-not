@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     advancedToggle: document.getElementById('advanced-toggle'),
     advancedContent: document.getElementById('advanced-content'),
-    customApiKeyInput: document.getElementById('custom-api-key'),
+    apiKeyInput: document.getElementById('custom-api-key'),
   };
 
   let currentAnalysisResult = null;
@@ -40,25 +40,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function loadSettings(){
     const s = getSettings();
-    // 兼容性检查：如果保存的模型不在新列表里，默认回到 2.5-flash
     const savedModel = s.selectedModel;
     const modelExists = Array.from(el.modelSelector.options).some(opt => opt.value === savedModel);
-    el.modelSelector.value = modelExists ? savedModel : 'gemini-2.5-flash';
+    el.modelSelector.value = modelExists ? savedModel : 'mistralai/ministral-14b-instruct-2512';
     
-    el.customApiKeyInput.value = s.customApiKey || '';
+    el.apiKeyInput.value = s.apiKey || '';
   }
 
   function handleModelChange() {
     updateSettings({ selectedModel: el.modelSelector.value });
-    // 切换模型后，自动重新检测连通性
     el.statusBar.className = 'status-bar loading';
     el.statusText.textContent = `正在检测 ${el.modelSelector.options[el.modelSelector.selectedIndex].text}...`;
     runAutoConnectivityTest();
   }
 
   function handleApiKeyChange() {
-    const key = el.customApiKeyInput.value.trim();
-    updateSettings({ customApiKey: key });
+    const key = el.apiKeyInput.value.trim();
+    updateSettings({ apiKey: key });
     
     el.statusBar.className = 'status-bar loading';
     el.statusText.textContent = '配置更新，正在重新检测...';
@@ -69,7 +67,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function runAutoConnectivityTest() {
     const startTime = Date.now();
-    const result = await testServiceAvailability();
+    const currentModel = el.modelSelector.value;
+    const result = await testServiceAvailability(currentModel);
     const pingTime = Date.now() - startTime;
 
     el.statusBar.classList.remove('loading');
@@ -84,11 +83,10 @@ document.addEventListener('DOMContentLoaded', () => {
         el.statusBar.classList.remove('success');
         el.statusPing.textContent = 'ERR';
         
-        // 连通性测试失败的详细提示
-        if (result.message.includes('Quota') || result.message.includes('额度') || result.message.includes('429')) {
-             el.statusText.textContent = '❌ 当前模型额度已满，请切换模型';
-        } else if (result.message.includes('未配置') && !el.customApiKeyInput.value) {
-             el.statusText.textContent = '未配置 API Key';
+        if (result.message.includes('Quota') || result.message.includes('429')) {
+             el.statusText.textContent = '❌ NVIDIA 额度已满，请切换模型';
+        } else if (result.message.includes('Invalid') || result.message.includes('401')) {
+             el.statusText.textContent = 'API Key 无效';
         } else {
              el.statusText.textContent = '连接异常: ' + result.message;
         }
@@ -138,10 +136,9 @@ document.addEventListener('DOMContentLoaded', () => {
         ui.createShareButton(handleShareResult);
       }, 300);
     }catch(error){
-      // ★★★ 智能错误引导 ★★★
       let errorMsg = error.message;
-      if (errorMsg.includes('Quota') || errorMsg.includes('额度') || errorMsg.includes('429')) {
-          errorMsg = `💔 当前模型 (${el.modelSelector.value}) 额度已耗尽！\n\n💡 解决方法：\n1. 请在上方【选择AI模型】中切换其他模型重试（推荐 Lite 或 Gemma 系列）\n2. 或在【高级设置】中填入自己的 API Key`;
+      if (errorMsg.includes('Quota') || errorMsg.includes('429')) {
+          errorMsg = `💔 NVIDIA 额度已耗尽！\n\n💡 解决方法：\n1. 请在上方切换其他模型（如 Mistral 或 Gemma）\n2. 或在【高级设置】中填入自己的 NVIDIA API Key`;
       }
       ui.displayError(errorMsg);
     }
@@ -193,8 +190,8 @@ document.addEventListener('DOMContentLoaded', () => {
         el.advancedContent.classList.toggle('hidden');
         el.advancedToggle.classList.toggle('active');
     });
-    el.customApiKeyInput.addEventListener('change', handleApiKeyChange);
-    el.customApiKeyInput.addEventListener('blur', handleApiKeyChange);
+    el.apiKeyInput.addEventListener('change', handleApiKeyChange);
+    el.apiKeyInput.addEventListener('blur', handleApiKeyChange);
   }
 
   initialize();
