@@ -150,18 +150,23 @@ export function createSavedResultsContainer(results, handlers){
     container.innerHTML = `<h2>保存的结果</h2><p style="text-align:center;opacity:.8">暂无保存的结果</p>`;
   }else{
     // [FIX] 增加 style="cursor: pointer;" 让用户知道可以点击
-    const grid = results.map((r,i)=>`
+    const grid = results.map((r,i)=>{
+      const verdictLabel = r.verdict === 'SMASH' ? '🔥 SMASH' : r.verdict === 'PASS' ? '❌ PASS' : '⚡ MODERATE';
+      const modeLabel = r.aiType==='brief'?'简短':r.aiType==='descriptive'?'详细':'小说';
+      const preview = (r.explanation||'').replace(/\*\*/g,'').replace(/\*/g,'').replace(/\n/g,' ').slice(0,60);
+      return `
       <div class="saved-result-card" data-index="${i}" style="cursor: pointer;">
         <img src="${r.image}" alt="Saved result ${i+1}">
         <div class="saved-result-info">
-          <p class="date">${new Date(r.timestamp).toLocaleDateString()}</p>
-          <p class="ai-type">模式: ${r.aiType==='brief'?'简短':r.aiType==='descriptive'?'详细':'小说'}</p>
+          <p style="font-weight:700;font-size:1rem;margin:0 0 2px">${verdictLabel} &nbsp;<span style="font-weight:400;opacity:.7">${r.rating}/10</span></p>
+          <p class="date" style="margin:0 0 2px">${new Date(r.timestamp).toLocaleDateString()} · ${modeLabel}模式</p>
+          <p style="font-size:.8rem;opacity:.65;margin:0 0 6px;line-height:1.4">${preview}${preview.length>=60?'…':''}</p>
           <div class="saved-result-actions">
             <button class="delete-btn" data-index="${i}">🗑️ 删除</button>
           </div>
         </div>
       </div>
-    `).join('');
+    `}).join('');
     container.innerHTML = `<h2>保存的结果</h2><div class="saved-results-grid">${grid}</div>`;
     
     // 绑定删除事件
@@ -198,8 +203,8 @@ export function showPopup(result){
   
   const explanationEl = document.getElementById('popup-explanation');
   if(explanationEl) {
-    explanationEl.textContent = result.explanation; 
-    explanationEl.style.whiteSpace = 'pre-wrap';
+    explanationEl.innerHTML = renderMd(result.explanation);
+    explanationEl.style.whiteSpace = '';
   }
 
   const dateEl = document.getElementById('popup-date');

@@ -187,9 +187,9 @@ header{text-align:center;margin-bottom:30px}
 
 #popup-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;z-index:9999;opacity:0;visibility:hidden;transition:all .3s}
 #popup-overlay.visible{opacity:1;visibility:visible}
-.popup-card{max-width:550px;width:90%;transform:scale(.95);transition:all .3s;max-height: 90vh; overflow-y: auto;}
+.popup-card{max-width:600px;width:90%;transform:scale(.95);transition:all .3s;max-height:90vh;overflow-y:auto;background:rgba(255,255,255,0.95);border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
 #popup-overlay.visible .popup-card{transform:scale(1)}
-.popup-card .glass-content{padding:24px; text-align: center;}
+.popup-card .glass-content{padding:28px;text-align:left;}
 .popup-card img{width:100%;border-radius:8px;margin-bottom:15px; max-height: 50vh; object-fit: contain; background: rgba(0,0,0,0.05);}
 .popup-card .close-popup{position:absolute;top:15px;right:15px;background:rgba(0,0,0,0.1);border-radius:50%;width:30px; height:30px; border:none;font-size:20px;cursor:pointer;color:#555;display: flex; align-items: center; justify-content: center;transition: all 0.2s;}
 .popup-card .close-popup:hover{background:rgba(0,0,0,0.2); color:#000;}
@@ -204,22 +204,26 @@ header{text-align:center;margin-bottom:30px}
   .ai-type-options { grid-template-columns: 1fr; }
   .popup-card img{max-height:40vh}
 }
-/* =========================================
-   【修复】弹窗内容模糊问题
-   ========================================= */
-
-/* 专门针对弹窗内的玻璃层，强制移除扭曲滤镜 */
+/* 弹窗透明度修复 */
 .popup-card .glass-tint--distorted {
-    /* 核心代码：将滤镜设置为无，并提高优先级 */
     filter: none !important;
-    
-    /* 可选：微调背景色，让它看起来更清晰通透，同时保留一点玻璃质感 */
-    background: rgba(255, 255, 255, 0.2) !important;
-    /* 确保混合模式正常 */
-    mix-blend-mode: normal !important;
+    background: transparent !important;
 }
-
-/* 可选：稍微降低弹窗背景光效的透明度，让内容主体更突出 */
 .popup-card .glass-effect {
-    opacity: 0.4 !important;
+    display: none;
+}
+.popup-card .glass-tint {
+    display: none;
+}
+.popup-card .glass-shine {
+    border: none;
+    box-shadow: none;
+}
+/* 弹窗内的 explanation 文字左对齐，行距宽松 */
+.popup-card #popup-explanation {
+    text-align: left;
+    line-height: 1.8;
+    font-size: 1rem;
+    color: #333;
+    white-space: normal;
 }
