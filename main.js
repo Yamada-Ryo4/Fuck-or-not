@@ -205,8 +205,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const wrapper = document.querySelector('.custom-select-wrapper');
       if (!wrapper) return;
       const select = wrapper.querySelector('select');
-      const oldArrow = wrapper.querySelector('.select-arrow');
-      if(oldArrow) oldArrow.remove(); // 移除原生箭头
+      
+      // 彻底清理可能存在的旧箭头或重复组件
+      const existingArrows = wrapper.querySelectorAll('.select-arrow, .select-arrow-icon');
+      existingArrows.forEach(a => a.remove());
 
       let trigger = wrapper.querySelector('.custom-select-trigger');
       if (!trigger) {
@@ -218,9 +220,11 @@ document.addEventListener('DOMContentLoaded', () => {
       let optionsContainer = wrapper.querySelector('.custom-options-container');
       if (!optionsContainer) {
           optionsContainer = document.createElement('div');
-          optionsContainer.className = 'custom-options-container glass-component';
+          optionsContainer.className = 'custom-options-container'; // 移除 glass-component 以免 margin 冲突
           wrapper.appendChild(optionsContainer);
       }
+
+      const svgIcon = `<svg class="select-arrow-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z" fill="currentColor"/></svg>`;
 
       function updateDropdown() {
           optionsContainer.innerHTML = '';
@@ -244,10 +248,8 @@ document.addEventListener('DOMContentLoaded', () => {
                       e.stopPropagation();
                       select.value = opt.value;
                       wrapper.classList.remove('open');
-                      trigger.innerHTML = `<span>${opt.textContent}</span>
-                          <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z" fill="currentColor"/></svg>`;
-                      updateDropdown(); // 更新所有选项的高亮状态
-                      select.dispatchEvent(new Event('change')); // 通知原有监听器
+                      updateDropdown(); // 更新 UI 状态
+                      select.dispatchEvent(new Event('change')); // 触发网络检测
                   });
                   optgroupDiv.appendChild(optionEl);
               });
@@ -255,16 +257,18 @@ document.addEventListener('DOMContentLoaded', () => {
           });
           
           const selectedText = select.options[select.selectedIndex]?.textContent || '选择模型...';
-          trigger.innerHTML = `<span>${selectedText}</span>
-              <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z" fill="currentColor"/></svg>`;
+          trigger.innerHTML = `<span>${selectedText}</span>${svgIcon}`;
       }
 
       updateDropdown();
 
-      trigger.addEventListener('click', (e) => {
+      trigger.onclick = (e) => {
           e.stopPropagation();
-          wrapper.classList.toggle('open');
-      });
+          const isOpen = wrapper.classList.contains('open');
+          // 先关闭所有可能的其他下拉菜单（如果有）
+          document.querySelectorAll('.custom-select-wrapper').forEach(w => w.classList.remove('open'));
+          if (!isOpen) wrapper.classList.add('open');
+      };
 
       document.addEventListener('click', (e) => {
           if (!wrapper.contains(e.target)) {
