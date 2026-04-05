@@ -45,7 +45,9 @@ header{text-align:center;margin-bottom:30px}
 .subtitle{color:#555;font-size:1.15rem;font-weight:500;margin-top:-8px; line-height:1.7;}
 
 /* ===================== 仪表盘 & 状态栏 ===================== */
-.dashboard-panel .glass-content { padding: 1.5rem; }
+.dashboard-panel.glass-component { overflow: visible !important; } /* 允许下拉菜单出框 */
+.dashboard-panel .glass-content { padding: 1.5rem; position: relative; z-index: 10; }
+.model-selector-group { position: relative; z-index: 60; margin-bottom: 20px; }
 .status-bar {
     display: flex; align-items: center;
     background: rgba(255,255,255,0.4);
