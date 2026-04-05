@@ -45,6 +45,9 @@ document.addEventListener('DOMContentLoaded', () => {
     el.modelSelector.value = modelExists ? savedModel : 'mistralai/ministral-14b-instruct-2512';
     
     el.apiKeyInput.value = s.apiKey || '';
+    
+    // 初始化自定义下拉菜单
+    initCustomSelect();
   }
 
   function handleModelChange() {
@@ -195,6 +198,79 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     el.apiKeyInput.addEventListener('change', handleApiKeyChange);
     el.apiKeyInput.addEventListener('blur', handleApiKeyChange);
+  }
+
+  // --- 自定义下拉菜单组件 ---
+  function initCustomSelect() {
+      const wrapper = document.querySelector('.custom-select-wrapper');
+      if (!wrapper) return;
+      const select = wrapper.querySelector('select');
+      const oldArrow = wrapper.querySelector('.select-arrow');
+      if(oldArrow) oldArrow.remove(); // 移除原生箭头
+
+      let trigger = wrapper.querySelector('.custom-select-trigger');
+      if (!trigger) {
+          trigger = document.createElement('div');
+          trigger.className = 'custom-select-trigger';
+          wrapper.appendChild(trigger);
+      }
+
+      let optionsContainer = wrapper.querySelector('.custom-options-container');
+      if (!optionsContainer) {
+          optionsContainer = document.createElement('div');
+          optionsContainer.className = 'custom-options-container glass-component';
+          wrapper.appendChild(optionsContainer);
+      }
+
+      function updateDropdown() {
+          optionsContainer.innerHTML = '';
+          const groups = select.querySelectorAll('optgroup');
+          groups.forEach(group => {
+              const optgroupDiv = document.createElement('div');
+              optgroupDiv.className = 'custom-optgroup';
+              
+              const labelDiv = document.createElement('div');
+              labelDiv.className = 'custom-optgroup-label';
+              labelDiv.textContent = group.label;
+              optgroupDiv.appendChild(labelDiv);
+
+              const options = group.querySelectorAll('option');
+              options.forEach(opt => {
+                  const optionEl = document.createElement('div');
+                  optionEl.className = 'custom-option' + (opt.value === select.value ? ' selected' : '');
+                  optionEl.textContent = opt.textContent;
+                  
+                  optionEl.addEventListener('click', (e) => {
+                      e.stopPropagation();
+                      select.value = opt.value;
+                      wrapper.classList.remove('open');
+                      trigger.innerHTML = `<span>${opt.textContent}</span>
+                          <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z" fill="currentColor"/></svg>`;
+                      updateDropdown(); // 更新所有选项的高亮状态
+                      select.dispatchEvent(new Event('change')); // 通知原有监听器
+                  });
+                  optgroupDiv.appendChild(optionEl);
+              });
+              optionsContainer.appendChild(optgroupDiv);
+          });
+          
+          const selectedText = select.options[select.selectedIndex]?.textContent || '选择模型...';
+          trigger.innerHTML = `<span>${selectedText}</span>
+              <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z" fill="currentColor"/></svg>`;
+      }
+
+      updateDropdown();
+
+      trigger.addEventListener('click', (e) => {
+          e.stopPropagation();
+          wrapper.classList.toggle('open');
+      });
+
+      document.addEventListener('click', (e) => {
+          if (!wrapper.contains(e.target)) {
+              wrapper.classList.remove('open');
+          }
+      });
   }
 
   initialize();
