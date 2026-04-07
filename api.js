@@ -17,7 +17,19 @@ export async function analyzeImage(imageDataUrl, aiType, modelName) {
             })
         });
 
-        const responseData = await response.json();
+        let responseData = {};
+        const contentType = response.headers.get('content-type');
+        
+        if (contentType && contentType.includes('application/json')) {
+            responseData = await response.json();
+        } else {
+            const rawText = await response.text();
+            if (response.status === 524 || response.status === 504) {
+                throw new Error('💔 服务器响应超时 (524/504)。原因：AI 生成内容过长或模型繁忙，请稍后重试或尝试更快的模型。');
+            }
+            throw new Error(`服务器返回了非 JSON 响应 (${response.status})。请检查网络。`);
+        }
+
         if (!response.ok) throw new Error(responseData.error || `请求失败: ${response.status}`);
         
         // 兼容适配层格式 (已经在 _worker.js 中处理成为了 candidates 结构)

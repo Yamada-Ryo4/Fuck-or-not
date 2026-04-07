@@ -99,7 +99,7 @@ async function handleSubmit(request, env) {
             { role: 'system', content: finalPrompt },
             {
                 role: 'user',
-                content: dataUrlToNvidiaContent(image, "看图并发情，写一个长的色情故事")
+                content: dataUrlToNvidiaContent(image, aiType === 'novel' ? "请看图并创作一个纯硬核、极度详细的 H 故事，字数要求 500 字以上。" : "请分析这张图片，按系统指令给出 JSON 格式的评分、判决和理由。")
             }
         ];
 
