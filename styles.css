@@ -30,24 +30,27 @@ p{margin-bottom:1.2rem; line-height:1.7; font-size:1.1rem}
   position:relative;border-radius:24px;overflow:hidden;
   box-shadow:0 6px 15px rgba(0,0,0,.08);
   transition:transform .35s cubic-bezier(.175,.885,.32,1.275), box-shadow .35s; 
-  margin-bottom:2rem
+  margin-bottom:2rem;
+  z-index: 1; /* 确保层级清晰 */
 }
+.nested-glass { border-radius: 24px !important; } /* 强化嵌套圆角 */
+
 .glass-component:hover:not(.no-hover){box-shadow:0 15px 35px rgba(0,0,0,.12); transform:translateY(-3px)}
-.glass-effect{position:absolute; inset:0; z-index:0; backdrop-filter:blur(10px) saturate(1.05); -webkit-backdrop-filter:blur(10px) saturate(1.05)}
-.glass-tint{position:absolute; inset:0; z-index:1; background:rgba(255,255,255,.25)}
-.glass-shine{position:absolute; inset:0; z-index:2; border:1px solid rgba(255,255,255,.5); box-shadow:inset 1px 1px 1px rgba(255,255,255,.6), inset -1px -1px 1px rgba(255,255,255,.3); pointer-events:none}
+.glass-effect{position:absolute; inset:0; z-index:0; backdrop-filter:blur(10px) saturate(1.05); -webkit-backdrop-filter:blur(10px) saturate(1.05); border-radius: inherit;}
+.glass-tint{position:absolute; inset:0; z-index:1; background:rgba(255,255,255,.25); border-radius: inherit;}
+.glass-shine{position:absolute; inset:0; z-index:2; border:1px solid rgba(255,255,255,.5); box-shadow:inset 1px 1px 1px rgba(255,255,255,.6), inset -1px -1px 1px rgba(255,255,255,.3); pointer-events:none; border-radius: inherit;}
 .glass-content{position:relative; z-index:3; padding:2rem; color:inherit}
 .glass-tint--distorted{filter:url(#glass-distortion);will-change:filter;backface-visibility:hidden;transform:translateZ(0);contain:paint;}
 
-.container.glass-component{max-width:750px;margin:2rem auto;padding:0}
-.container>.glass-content{padding:30px 40px}
+.container.glass-component{max-width:750px;margin:2rem auto;padding:0; border-radius: 24px !important; overflow: hidden;}
+.container>.glass-content{padding:30px 40px; border-radius: inherit;}
 header{text-align:center;margin-bottom:30px}
 .subtitle{color:#555;font-size:1.15rem;font-weight:500;margin-top:-8px; line-height:1.7;}
 
 /* ===================== 仪表盘 & 状态栏 ===================== */
-.dashboard-panel.glass-component { overflow: visible !important; } /* 允许下拉菜单出框 */
-.dashboard-panel .glass-content { padding: 1.5rem; position: relative; z-index: 10; }
-.model-selector-group { position: relative; z-index: 60; margin-bottom: 20px; }
+.dashboard-panel.glass-component { overflow: visible !important; border-radius: 24px !important; } /* 允许下拉菜单出框 */
+.dashboard-panel .glass-content { padding: 1.5rem; position: relative; z-index: 10; border-radius: inherit; }
+.model-selector-group { position: relative; z-index: 60; margin-bottom: 20px; border-radius: inherit; }
 .status-bar {
     display: flex; align-items: center;
     background: rgba(255,255,255,0.4);
@@ -159,7 +162,7 @@ header{text-align:center;margin-bottom:30px}
 .ai-type-name{display:block; font-size:1rem;font-weight:700;margin-bottom:4px}
 .ai-type-desc{display:block; font-size:.85rem;color: #666;opacity:.8; transition: color .2s}
 
-.upload-area{cursor:pointer;text-align:center;border:2px dashed rgba(0,0,0,.25);transition:all .3s;background: transparent;}
+.upload-area{cursor:pointer;text-align:center;border:2px dashed rgba(0,0,0,.25);transition:all .3s;background: transparent; border-radius: 24px !important;}
 .upload-area .glass-content{padding:2.6rem 1rem}
 .upload-area:hover,.upload-area.drag-over{border-color:#007bff;background-color:rgba(0,123,255,.05)}
 .upload-inner{display:flex;flex-direction:column;align-items:center;gap:14px}
