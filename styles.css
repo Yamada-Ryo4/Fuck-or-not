@@ -40,9 +40,9 @@ p{margin-bottom:1.2rem; line-height:1.7; font-size:1.1rem}
 .glass-tint{position:absolute; inset:0; z-index:1; background:rgba(255,255,255,.25); border-radius: inherit;}
 .glass-shine{position:absolute; inset:0; z-index:2; border:1px solid rgba(255,255,255,.5); box-shadow:inset 1px 1px 1px rgba(255,255,255,.6), inset -1px -1px 1px rgba(255,255,255,.3); pointer-events:none; border-radius: inherit;}
 .glass-content{position:relative; z-index:3; padding:2rem; color:inherit}
-.glass-tint--distorted{filter:url(#glass-distortion);will-change:filter;backface-visibility:hidden;transform:translateZ(0);contain:paint;}
+.glass-tint--distorted{filter:url(#glass-distortion);will-change:filter;backface-visibility:hidden;transform:translateZ(0);contain:paint; border-radius: inherit;}
 
-.container.glass-component{max-width:750px;margin:2rem auto;padding:0; border-radius: 24px !important; overflow: hidden;}
+.container.glass-component{max-width:750px;margin:2rem auto;padding:0; border-radius: 24px !important; overflow: visible !important;}
 .container>.glass-content{padding:30px 40px; border-radius: inherit;}
 header{text-align:center;margin-bottom:30px}
 .subtitle{color:#555;font-size:1.15rem;font-weight:500;margin-top:-8px; line-height:1.7;}
